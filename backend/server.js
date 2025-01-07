@@ -81,9 +81,9 @@ app.post("/send-email", upload.fields([{ name: "csvFile" }, { name: "contentFile
       for (const recipient of uniqueRecipients) {
         const personalizedContent = replacePersonalizationTags(emailContent, recipient);
         const trackingId = uuidv4();
-        const trackingPixel = `<img src="http://localhost:3000/track/${trackingId}" width="1" height="1" style="display:none;" />`;
-        const trackedLink = `http://localhost:3000/click/${trackingId}`;
-        const unsubscribeLink = `<p>If you wish to unsubscribe, click <a href="http://localhost:3000/unsubscribe/${encodeURIComponent(
+        const trackingPixel = `<img src="https://mailer-backend-7ay3.onrender.com/track/${trackingId}" width="1" height="1" style="display:none;" />`;
+        const trackedLink = `https://mailer-backend-7ay3.onrender.com/click/${trackingId}`;
+        const unsubscribeLink = `<p>If you wish to unsubscribe, click <a href="https://mailer-backend-7ay3.onrender.com/unsubscribe/${encodeURIComponent(
           recipient.email
         )}">here</a>.</p>`;
 
@@ -142,7 +142,7 @@ app.get("/track/:trackingId", (req, res) => {
 app.get("/click/:trackingId", (req, res) => {
   const trackingId = req.params.trackingId;
   console.log(`Link clicked. Tracking ID: ${trackingId}`);
-  res.redirect("http://example.com");
+  res.redirect("https://mailer1-d1qw.onrender.com");
 });
 
 // Handle unsubscribe

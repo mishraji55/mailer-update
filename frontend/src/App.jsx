@@ -34,7 +34,7 @@ const EmailSender = () => {
     if (isScheduled) formData.append("sendAt", scheduleDate);
 
     try {
-      const response = await fetch("http://localhost:3000/send-email", {
+      const response = await fetch("https://mailer-backend-7ay3.onrender.com/send-email", {
         method: "POST",
         body: formData,
       });
