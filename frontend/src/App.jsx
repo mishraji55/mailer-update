@@ -1,5 +1,9 @@
 import React, { useState, useEffect } from "react";
 
+// Define frontend and backend URLs
+const FRONTEND_URL = "https://mailer1-d1qw.onrender.com";
+const BACKEND_URL = "https://mailer-backend-7ay3.onrender.com";
+
 const EmailSender = () => {
   const [csvFile, setCsvFile] = useState(null);
   const [contentFile, setContentFile] = useState(null);
@@ -16,7 +20,7 @@ const EmailSender = () => {
   // Fetch the logged-in user's details
   const fetchUser = async () => {
     try {
-      const response = await fetch("https://mailer-backend-7ay3.onrender.com/auth/user", {
+      const response = await fetch(`${BACKEND_URL}/auth/user`, {
         credentials: "include", // Include cookies for session-based authentication
       });
       const data = await response.json();
@@ -33,7 +37,7 @@ const EmailSender = () => {
   // Fetch tracking reports from the backend
   const fetchTrackingReports = async () => {
     try {
-      const response = await fetch("https://mailer-backend-7ay3.onrender.com/tracking-reports");
+      const response = await fetch(`${BACKEND_URL}/tracking-reports`);
       const data = await response.json();
       setTrackingReports(data.trackingReports);
     } catch (error) {
@@ -44,7 +48,7 @@ const EmailSender = () => {
   // Fetch campaign details
   const fetchCampaignDetails = async (campaignId) => {
     try {
-      const response = await fetch(`https://mailer-backend-7ay3.onrender.com/campaign-details/${campaignId}`);
+      const response = await fetch(`${BACKEND_URL}/campaign-details/${campaignId}`);
       const data = await response.json();
       setSelectedCampaign(data);
     } catch (error) {
@@ -72,7 +76,7 @@ const EmailSender = () => {
 
   // Handle Google OAuth2 login
   const handleGoogleLogin = () => {
-    window.location.href = "https://mailer-backend-7ay3.onrender.com/auth/google";
+    window.location.href = `${BACKEND_URL}/auth/google`;
   };
 
   // Handle sending emails
@@ -101,7 +105,7 @@ const EmailSender = () => {
     if (isScheduled) formData.append("sendAt", scheduleDate);
 
     try {
-      const response = await fetch("https://mailer-backend-7ay3.onrender.com/send-email", {
+      const response = await fetch(`${BACKEND_URL}/send-email`, {
         method: "POST",
         body: formData,
       });
