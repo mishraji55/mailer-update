@@ -14,37 +14,7 @@ const cors = require("cors");
 const upload = multer({ dest: "uploads/" });
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
-
-// Define allowed origins for CORS
-const allowedOrigins = [
-  "https://mass-email-sender.onrender.com",
-  "https://mailer1-d1qw.onrender.com",
-  "http://localhost:3000",
-];
-
-// Configure CORS
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      console.log("Origin:", origin);
-      if (allowedOrigins.includes(origin) || !origin) {
-        callback(null, true);
-      } else {
-        callback(new Error("Not allowed by CORS"));
-      }
-    },
-  })
-);
-
-// Handle CORS errors gracefully
-app.use((err, req, res, next) => {
-  if (err.message === "Not allowed by CORS") {
-    res.status(403).json({ message: "CORS policy blocked this request." });
-  } else {
-    next(err);
-  }
-});
+app.use(cors());
 
 // Set up transporter for sending emails
 const transporter = nodemailer.createTransport({
@@ -111,9 +81,11 @@ app.post("/send-email", upload.fields([{ name: "csvFile" }, { name: "contentFile
       for (const recipient of uniqueRecipients) {
         const personalizedContent = replacePersonalizationTags(emailContent, recipient);
         const trackingId = uuidv4();
-        const trackingPixel = `<img src="https://mass-email-sender-backend.onrender.com/track/${trackingId}" width="1" height="1" style="display:none;" />`;
-        const trackedLink = `https://mass-email-sender-backend.onrender.com/click/${trackingId}`;
-        const unsubscribeLink = `<p>If you wish to unsubscribe, click <a href="https://mass-email-sender-backend.onrender.com/unsubscribe/${encodeURIComponent(recipient.email)}">here</a>.</p>`;
+        const trackingPixel = `<img src="https://mailer-backend-7ay3.onrender.com/track/${trackingId}" width="1" height="1" style="display:none;" />`;
+        const trackedLink = `https://mailer-backend-7ay3.onrender.com/click/${trackingId}`;
+        const unsubscribeLink = `<p>If you wish to unsubscribe, click <a href="https://mailer-backend-7ay3.onrender.com/unsubscribe/${encodeURIComponent(
+          recipient.email
+        )}">here</a>.</p>`;
 
         const finalHtml = `${personalizedContent}<p>Click <a href="${trackedLink}">here</a> to visit the link.</p>${trackingPixel}${unsubscribeLink}`;
 
@@ -121,7 +93,7 @@ app.post("/send-email", upload.fields([{ name: "csvFile" }, { name: "contentFile
           from: process.env.EMAIL_USER,
           to: recipient.email,
           subject,
-          text: personalizedContent,
+          text: personalizedContent, // Plain text fallback
           html: finalHtml,
         };
 
@@ -163,29 +135,14 @@ app.post("/send-email", upload.fields([{ name: "csvFile" }, { name: "contentFile
 app.get("/track/:trackingId", (req, res) => {
   const trackingId = req.params.trackingId;
   console.log(`Email opened. Tracking ID: ${trackingId}`);
-
-  // Log the tracking ID to a file or database (optional)
-  fs.appendFileSync("tracking.log", `Email opened. Tracking ID: ${trackingId}\n`);
-
-  // Send a 1x1 transparent pixel as the response
-  const pixel = Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64");
-  res.writeHead(200, {
-    "Content-Type": "image/gif",
-    "Content-Length": pixel.length,
-  });
-  res.end(pixel);
+  res.sendFile(path.join(__dirname, "tracking-pixels.png"));
 });
 
 // Handle click tracking
 app.get("/click/:trackingId", (req, res) => {
   const trackingId = req.params.trackingId;
   console.log(`Link clicked. Tracking ID: ${trackingId}`);
-
-  // Log the tracking ID to a file or database (optional)
-  fs.appendFileSync("tracking.log", `Link clicked. Tracking ID: ${trackingId}\n`);
-
-  // Redirect the user to the desired URL
-  res.redirect("https://mailer1-d1qw.onrender.com/"); // Replace with your desired URL
+  res.redirect("https://mailer1-d1qw.onrender.com");
 });
 
 // Handle unsubscribe
