@@ -14,24 +14,24 @@ const cors = require("cors");
 const upload = multer({ dest: "uploads/" });
 
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
+app.use(express.urlencoded({ extended: true }));
 
 // Define allowed origins for CORS
 const allowedOrigins = [
-  "https://mass-email-sender.onrender.com", // Old frontend URL
-  "https://mailer1-d1qw.onrender.com", // New frontend URL
-  "http://localhost:3000", // For local development
+  "https://mass-email-sender.onrender.com",
+  "https://mailer1-d1qw.onrender.com",
+  "http://localhost:3000",
 ];
 
 // Configure CORS
 app.use(
   cors({
     origin: function (origin, callback) {
-      console.log("Origin:", origin); // Log the origin for debugging
+      console.log("Origin:", origin);
       if (allowedOrigins.includes(origin) || !origin) {
-        callback(null, true); // Allow the request
+        callback(null, true);
       } else {
-        callback(new Error("Not allowed by CORS")); // Block the request
+        callback(new Error("Not allowed by CORS"));
       }
     },
   })
@@ -121,7 +121,7 @@ app.post("/send-email", upload.fields([{ name: "csvFile" }, { name: "contentFile
           from: process.env.EMAIL_USER,
           to: recipient.email,
           subject,
-          text: personalizedContent, // Plain text fallback
+          text: personalizedContent,
           html: finalHtml,
         };
 
@@ -163,14 +163,29 @@ app.post("/send-email", upload.fields([{ name: "csvFile" }, { name: "contentFile
 app.get("/track/:trackingId", (req, res) => {
   const trackingId = req.params.trackingId;
   console.log(`Email opened. Tracking ID: ${trackingId}`);
-  res.sendFile(path.join(__dirname, "tracking-pixels.png"));
+
+  // Log the tracking ID to a file or database (optional)
+  fs.appendFileSync("tracking.log", `Email opened. Tracking ID: ${trackingId}\n`);
+
+  // Send a 1x1 transparent pixel as the response
+  const pixel = Buffer.from("R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", "base64");
+  res.writeHead(200, {
+    "Content-Type": "image/gif",
+    "Content-Length": pixel.length,
+  });
+  res.end(pixel);
 });
 
 // Handle click tracking
 app.get("/click/:trackingId", (req, res) => {
   const trackingId = req.params.trackingId;
   console.log(`Link clicked. Tracking ID: ${trackingId}`);
-  res.redirect("http://example.com");
+
+  // Log the tracking ID to a file or database (optional)
+  fs.appendFileSync("tracking.log", `Link clicked. Tracking ID: ${trackingId}\n`);
+
+  // Redirect the user to the desired URL
+  res.redirect("https://mailer1-d1qw.onrender.com/"); // Replace with your desired URL
 });
 
 // Handle unsubscribe
