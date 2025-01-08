@@ -123,8 +123,9 @@ app.get(
   "/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/login" }),
   (req, res) => {
-    // Redirect to the frontend root URL after successful login
-    res.redirect("https://mailer1-d1qw.onrender.com/");
+    // Redirect to the frontend with the user's data as a query parameter
+    const userData = encodeURIComponent(JSON.stringify(req.user));
+    res.redirect(`https://mailer1-d1qw.onrender.com/?user=${userData}`);
   }
 );
 
