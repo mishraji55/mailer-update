@@ -8,8 +8,8 @@ const EmailSender = () => {
   const [isScheduled, setIsScheduled] = useState(false);
   const [scheduleDate, setScheduleDate] = useState("");
   const [status, setStatus] = useState("");
-  const [trackingReports, setTrackingReports] = useState([]); // State for tracking reports
-  const [selectedCampaign, setSelectedCampaign] = useState(null); // State for selected campaign
+  const [trackingReports, setTrackingReports] = useState([]);
+  const [selectedCampaign, setSelectedCampaign] = useState(null);
 
   // Fetch tracking reports from the backend
   const fetchTrackingReports = async () => {
@@ -22,7 +22,7 @@ const EmailSender = () => {
     }
   };
 
-  // Fetch tracking data for a specific campaign
+  // Fetch campaign details
   const fetchCampaignDetails = async (campaignId) => {
     try {
       const response = await fetch(`https://mailer-backend-7ay3.onrender.com/campaign-details/${campaignId}`);
@@ -32,6 +32,17 @@ const EmailSender = () => {
       console.error("Error fetching campaign details:", error);
     }
   };
+
+  // Auto-refresh campaign data every 5 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (selectedCampaign) {
+        fetchCampaignDetails(selectedCampaign.campaignId);
+      }
+    }, 5000); // Refresh every 5 seconds
+
+    return () => clearInterval(interval); // Cleanup interval on unmount
+  }, [selectedCampaign]);
 
   // Fetch tracking reports when the component mounts
   useEffect(() => {
@@ -71,7 +82,7 @@ const EmailSender = () => {
       const data = await response.json();
       if (response.ok) {
         setStatus(data.message || "Emails sent successfully!");
-        fetchTrackingReports(); // Refresh tracking reports after sending emails
+        fetchTrackingReports(); // Refresh tracking reports
       } else {
         setStatus(data.message || "Error sending email");
       }
