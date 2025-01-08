@@ -26,7 +26,7 @@ const transporter = nodemailer.createTransport({
 });
 
 // In-memory store for tracking data
-const trackingDataStore = {};
+const campaigns = {};
 
 // Helper function to replace tags with recipient data
 const replacePersonalizationTags = (content, recipientData) => {
@@ -74,7 +74,17 @@ app.post("/send-email", upload.fields([{ name: "csvFile" }, { name: "contentFile
     })
     .on("end", async () => {
       const uniqueRecipients = Array.from(new Set(recipients));
-      const trackingData = [];
+      const campaignId = uuidv4();
+      campaigns[campaignId] = {
+        subject,
+        recipients: uniqueRecipients.map((recipient) => ({
+          email: recipient.email,
+          status: "Not Sent",
+          opened: false,
+          linkVisited: false,
+        })),
+      };
+
       let emailContent = manualText || "";
 
       if (contentFile) {
@@ -84,7 +94,6 @@ app.post("/send-email", upload.fields([{ name: "csvFile" }, { name: "contentFile
       for (const recipient of uniqueRecipients) {
         const personalizedContent = replacePersonalizationTags(emailContent, recipient);
         const trackingId = uuidv4();
-        trackingDataStore[trackingId] = { clicks: 0, emailsSent: 1 }; // Initialize tracking data
 
         const trackingPixel = `<img src="https://mailer-backend-7ay3.onrender.com/track/${trackingId}" width="1" height="1" style="display:none;" />`;
         const trackedLink = `https://mailer-backend-7ay3.onrender.com/click/${trackingId}`;
@@ -108,7 +117,7 @@ app.post("/send-email", upload.fields([{ name: "csvFile" }, { name: "contentFile
             try {
               const result = await transporter.sendMail(mailOptions);
               console.log(`Scheduled email sent successfully to ${recipient.email}`, result);
-              trackingData.push({ recipient: recipient.email, trackingId, clickUrl: trackedLink });
+              campaigns[campaignId].recipients.find((r) => r.email === recipient.email).status = "Sent";
             } catch (error) {
               console.error(`Error sending scheduled email to ${recipient.email}:`, error.message);
             }
@@ -117,7 +126,7 @@ app.post("/send-email", upload.fields([{ name: "csvFile" }, { name: "contentFile
           try {
             const result = await transporter.sendMail(mailOptions);
             console.log(`Email sent successfully to ${recipient.email}`, result);
-            trackingData.push({ recipient: recipient.email, trackingId, clickUrl: trackedLink });
+            campaigns[campaignId].recipients.find((r) => r.email === recipient.email).status = "Sent";
           } catch (error) {
             console.error(`Error sending email to ${recipient.email}:`, error.message);
           }
@@ -128,7 +137,7 @@ app.post("/send-email", upload.fields([{ name: "csvFile" }, { name: "contentFile
       fs.unlinkSync(filePath);
       if (contentFile) fs.unlinkSync(path.join(__dirname, contentFile.path));
 
-      res.status(200).send({ message: "Emails processed successfully!", trackingData });
+      res.status(200).send({ message: "Emails processed successfully!", campaignId });
     })
     .on("error", (err) => {
       console.error("Error processing CSV file:", err);
@@ -140,6 +149,16 @@ app.post("/send-email", upload.fields([{ name: "csvFile" }, { name: "contentFile
 app.get("/track/:trackingId", (req, res) => {
   const trackingId = req.params.trackingId;
   console.log(`Email opened. Tracking ID: ${trackingId}`);
+
+  // Update campaign recipient's opened status
+  for (const campaignId in campaigns) {
+    const recipient = campaigns[campaignId].recipients.find((r) => r.trackingId === trackingId);
+    if (recipient) {
+      recipient.opened = true;
+      break;
+    }
+  }
+
   res.sendFile(path.join(__dirname, "tracking-pixels.png"));
 });
 
@@ -148,25 +167,35 @@ app.get("/click/:trackingId", (req, res) => {
   const trackingId = req.params.trackingId;
   console.log(`Link clicked. Tracking ID: ${trackingId}`);
 
-  // Increment click count for this tracking ID
-  if (trackingDataStore[trackingId]) {
-    trackingDataStore[trackingId].clicks += 1;
-  } else {
-    trackingDataStore[trackingId] = { clicks: 1, emailsSent: 0 };
+  // Update campaign recipient's linkVisited status
+  for (const campaignId in campaigns) {
+    const recipient = campaigns[campaignId].recipients.find((r) => r.trackingId === trackingId);
+    if (recipient) {
+      recipient.linkVisited = true;
+      break;
+    }
   }
 
   res.redirect("https://mailer1-d1qw.onrender.com");
 });
 
-// Fetch tracking data
-app.get("/tracking-data", (req, res) => {
-  const trackingData = Object.keys(trackingDataStore).map((trackingId) => {
-    const { clicks, emailsSent } = trackingDataStore[trackingId];
-    const ctr = emailsSent > 0 ? ((clicks / emailsSent) * 100).toFixed(2) : 0;
-    return { trackingId, clicks, emailsSent, ctr };
-  });
+// Fetch tracking reports
+app.get("/tracking-reports", (req, res) => {
+  const trackingReports = Object.keys(campaigns).map((campaignId) => ({
+    campaignId,
+    subject: campaigns[campaignId].subject,
+  }));
+  res.status(200).json({ trackingReports });
+});
 
-  res.status(200).json({ trackingData });
+// Fetch campaign details
+app.get("/campaign-details/:campaignId", (req, res) => {
+  const campaignId = req.params.campaignId;
+  const campaign = campaigns[campaignId];
+  if (!campaign) {
+    return res.status(404).send({ message: "Campaign not found." });
+  }
+  res.status(200).json(campaign);
 });
 
 // Handle unsubscribe
