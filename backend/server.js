@@ -7,6 +7,7 @@ const path = require("path");
 const emailValidator = require("email-validator");
 const { v4: uuidv4 } = require("uuid");
 const schedule = require("node-schedule");
+const mongoose = require("mongoose");
 require("dotenv").config();
 
 const app = express();
@@ -16,6 +17,25 @@ const upload = multer({ dest: "uploads/" });
 app.use(express.json());
 app.use(cors());
 
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log("Connected to MongoDB"))
+  .catch((err) => console.error("Failed to connect to MongoDB:", err));
+
+// Define Campaign Schema
+const campaignSchema = new mongoose.Schema({
+  subject: String,
+  recipients: [{
+    email: String,
+    status: { type: String, default: "Not Sent" },
+    opened: { type: Boolean, default: false },
+    linkVisited: { type: Boolean, default: false },
+    trackingId: String,
+  }],
+});
+
+const Campaign = mongoose.model("Campaign", campaignSchema);
+
 // Set up transporter for sending emails
 const transporter = nodemailer.createTransport({
   service: "gmail",
@@ -24,9 +44,6 @@ const transporter = nodemailer.createTransport({
     pass: process.env.EMAIL_PASS,
   },
 });
-
-// In-memory store for tracking data
-const campaigns = {};
 
 // Helper function to replace tags with recipient data
 const replacePersonalizationTags = (content, recipientData) => {
@@ -75,15 +92,17 @@ app.post("/send-email", upload.fields([{ name: "csvFile" }, { name: "contentFile
     .on("end", async () => {
       const uniqueRecipients = Array.from(new Set(recipients));
       const campaignId = uuidv4();
-      campaigns[campaignId] = {
+
+      // Create a new campaign in MongoDB
+      const newCampaign = new Campaign({
         subject,
         recipients: uniqueRecipients.map((recipient) => ({
           email: recipient.email,
-          status: "Not Sent",
-          opened: false,
-          linkVisited: false,
+          trackingId: uuidv4(),
         })),
-      };
+      });
+
+      await newCampaign.save();
 
       let emailContent = manualText || "";
 
@@ -93,7 +112,8 @@ app.post("/send-email", upload.fields([{ name: "csvFile" }, { name: "contentFile
 
       for (const recipient of uniqueRecipients) {
         const personalizedContent = replacePersonalizationTags(emailContent, recipient);
-        const trackingId = uuidv4();
+        const recipientData = newCampaign.recipients.find((r) => r.email === recipient.email);
+        const trackingId = recipientData.trackingId;
 
         const trackingPixel = `<img src="https://mailer-backend-7ay3.onrender.com/track/${trackingId}" width="1" height="1" style="display:none;" />`;
         const trackedLink = `https://mailer-backend-7ay3.onrender.com/click/${trackingId}`;
@@ -117,7 +137,8 @@ app.post("/send-email", upload.fields([{ name: "csvFile" }, { name: "contentFile
             try {
               const result = await transporter.sendMail(mailOptions);
               console.log(`Scheduled email sent successfully to ${recipient.email}`, result);
-              campaigns[campaignId].recipients.find((r) => r.email === recipient.email).status = "Sent";
+              recipientData.status = "Sent";
+              await newCampaign.save();
             } catch (error) {
               console.error(`Error sending scheduled email to ${recipient.email}:`, error.message);
             }
@@ -126,7 +147,8 @@ app.post("/send-email", upload.fields([{ name: "csvFile" }, { name: "contentFile
           try {
             const result = await transporter.sendMail(mailOptions);
             console.log(`Email sent successfully to ${recipient.email}`, result);
-            campaigns[campaignId].recipients.find((r) => r.email === recipient.email).status = "Sent";
+            recipientData.status = "Sent";
+            await newCampaign.save();
           } catch (error) {
             console.error(`Error sending email to ${recipient.email}:`, error.message);
           }
@@ -137,7 +159,7 @@ app.post("/send-email", upload.fields([{ name: "csvFile" }, { name: "contentFile
       fs.unlinkSync(filePath);
       if (contentFile) fs.unlinkSync(path.join(__dirname, contentFile.path));
 
-      res.status(200).send({ message: "Emails processed successfully!", campaignId });
+      res.status(200).send({ message: "Emails processed successfully!", campaignId: newCampaign._id });
     })
     .on("error", (err) => {
       console.error("Error processing CSV file:", err);
@@ -146,16 +168,17 @@ app.post("/send-email", upload.fields([{ name: "csvFile" }, { name: "contentFile
 });
 
 // Track email open (tracking pixel)
-app.get("/track/:trackingId", (req, res) => {
+app.get("/track/:trackingId", async (req, res) => {
   const trackingId = req.params.trackingId;
   console.log(`Email opened. Tracking ID: ${trackingId}`);
 
-  // Update campaign recipient's opened status
-  for (const campaignId in campaigns) {
-    const recipient = campaigns[campaignId].recipients.find((r) => r.trackingId === trackingId);
+  // Update recipient's opened status in MongoDB
+  const campaign = await Campaign.findOne({ "recipients.trackingId": trackingId });
+  if (campaign) {
+    const recipient = campaign.recipients.find((r) => r.trackingId === trackingId);
     if (recipient) {
       recipient.opened = true;
-      break;
+      await campaign.save();
     }
   }
 
@@ -163,16 +186,17 @@ app.get("/track/:trackingId", (req, res) => {
 });
 
 // Handle click tracking
-app.get("/click/:trackingId", (req, res) => {
+app.get("/click/:trackingId", async (req, res) => {
   const trackingId = req.params.trackingId;
   console.log(`Link clicked. Tracking ID: ${trackingId}`);
 
-  // Update campaign recipient's linkVisited status
-  for (const campaignId in campaigns) {
-    const recipient = campaigns[campaignId].recipients.find((r) => r.trackingId === trackingId);
+  // Update recipient's linkVisited status in MongoDB
+  const campaign = await Campaign.findOne({ "recipients.trackingId": trackingId });
+  if (campaign) {
+    const recipient = campaign.recipients.find((r) => r.trackingId === trackingId);
     if (recipient) {
       recipient.linkVisited = true;
-      break;
+      await campaign.save();
     }
   }
 
@@ -180,18 +204,15 @@ app.get("/click/:trackingId", (req, res) => {
 });
 
 // Fetch tracking reports
-app.get("/tracking-reports", (req, res) => {
-  const trackingReports = Object.keys(campaigns).map((campaignId) => ({
-    campaignId,
-    subject: campaigns[campaignId].subject,
-  }));
+app.get("/tracking-reports", async (req, res) => {
+  const trackingReports = await Campaign.find({}, { subject: 1, _id: 1 });
   res.status(200).json({ trackingReports });
 });
 
 // Fetch campaign details
-app.get("/campaign-details/:campaignId", (req, res) => {
+app.get("/campaign-details/:campaignId", async (req, res) => {
   const campaignId = req.params.campaignId;
-  const campaign = campaigns[campaignId];
+  const campaign = await Campaign.findById(campaignId);
   if (!campaign) {
     return res.status(404).send({ message: "Campaign not found." });
   }
