@@ -27,6 +27,14 @@ const EmailSender = () => {
           Authorization: `Bearer ${token}`, // Include JWT
         },
       });
+
+      if (response.status === 403) {
+        // Token is invalid or expired
+        localStorage.removeItem("jwt"); // Clear the token
+        window.location.href = "/login"; // Redirect to login
+        return;
+      }
+
       const data = await response.json();
       console.log("User data received:", data);
       if (response.ok) {
@@ -48,6 +56,14 @@ const EmailSender = () => {
           Authorization: `Bearer ${token}`, // Include JWT
         },
       });
+
+      if (response.status === 403) {
+        // Token is invalid or expired
+        localStorage.removeItem("jwt"); // Clear the token
+        window.location.href = "/login"; // Redirect to login
+        return;
+      }
+
       const data = await response.json();
       console.log("Tracking reports received:", data);
       setTrackingReports(data.trackingReports);
@@ -65,6 +81,14 @@ const EmailSender = () => {
           Authorization: `Bearer ${token}`, // Include JWT
         },
       });
+
+      if (response.status === 403) {
+        // Token is invalid or expired
+        localStorage.removeItem("jwt"); // Clear the token
+        window.location.href = "/login"; // Redirect to login
+        return;
+      }
+
       const data = await response.json();
       console.log("Campaign details received:", data);
       setSelectedCampaign(data);
