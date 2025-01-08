@@ -102,17 +102,6 @@ passport.use(
   )
 );
 
-// Serialize and deserialize user
-passport.serializeUser((user, done) => done(null, user._id));
-passport.deserializeUser(async (id, done) => {
-  try {
-    const user = await User.findById(id);
-    done(null, user);
-  } catch (err) {
-    done(err, null);
-  }
-});
-
 // Google OAuth2 login route
 app.get(
   "/auth/google",
@@ -127,7 +116,7 @@ app.get(
 // Google OAuth2 callback route
 app.get(
   "/auth/google/callback",
-  passport.authenticate("google", { failureRedirect: `${FRONTEND_URL}/login` }),
+  passport.authenticate("google", { failureRedirect: `${FRONTEND_URL}/login`, session: false }), // Disable sessions
   (req, res) => {
     console.log("Google OAuth2 callback triggered. User:", req.user);
 
