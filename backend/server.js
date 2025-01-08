@@ -102,8 +102,8 @@ app.get(
   "/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/login" }),
   (req, res) => {
-    // Redirect to the CampaignForm route after successful login
-    res.redirect("https://mailer1-d1qw.onrender.com/campaign");
+    // Redirect to the frontend's main page after login
+    res.redirect("https://mailer1-d1qw.onrender.com");
   }
 );
 
