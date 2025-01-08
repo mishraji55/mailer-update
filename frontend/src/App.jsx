@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { BrowserRouter as Router, Route, Routes, useNavigate } from "react-router-dom"; // Add React Router
-import Sidebar from "./components/Sidebar"; // Ensure this import path is correct
+import Sidebar from "./components/Sidebar";
 import CampaignForm from "./components/CampaignForm";
 import TrackingReports from "./components/TrackingReports";
 import CampaignDetails from "./components/CampaignDetails";
