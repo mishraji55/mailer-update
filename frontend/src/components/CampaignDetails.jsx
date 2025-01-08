@@ -1,10 +1,31 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
-const CampaignDetails = ({ campaign }) => {
+// Hardcoded backend URL
+const BACKEND_URL = "https://mailer-backend-7ay3.onrender.com";
+
+const CampaignDetails = ({ campaignId }) => {
+  const [campaign, setCampaign] = useState(null);
+
+  const fetchCampaignDetails = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/campaign-details/${campaignId}`);
+      const data = await response.json();
+      setCampaign(data);
+    } catch (error) {
+      console.error("Error fetching campaign details:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchCampaignDetails();
+  }, [campaignId]);
+
+  if (!campaign) return <div>Loading...</div>;
+
   return (
-    <div>
+    <div className="campaign-details">
       <h2>{campaign.subject}</h2>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <table>
         <thead>
           <tr>
             <th>Recipient</th>
@@ -28,4 +49,4 @@ const CampaignDetails = ({ campaign }) => {
   );
 };
 
-export default CampaignDetails; 
+export default CampaignDetails;

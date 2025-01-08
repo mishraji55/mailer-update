@@ -7,7 +7,7 @@ const Sidebar = ({ user, setSelectedCampaign, setShowTrackingReports, handleGoog
       {!user && (
         <li>
           <button
-            onClick={handleGoogleLogin} // Use the prop here
+            onClick={handleGoogleLogin}
             className="login-button"
           >
             Login with Google

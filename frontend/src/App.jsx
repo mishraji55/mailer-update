@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
 import Sidebar from "./components/Sidebar";
-import Login from "./components/Login";
 import CampaignForm from "./components/CampaignForm";
 import TrackingReports from "./components/TrackingReports";
 import CampaignDetails from "./components/CampaignDetails";
 import CampaignList from "./components/CampaignList";
 import "./styles.css";
 
+
+const BACKEND_URL = "https://mailer-backend-7ay3.onrender.com";
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -17,7 +18,7 @@ const App = () => {
   // Fetch tracking reports
   const fetchTrackingReports = async () => {
     try {
-      const response = await fetch(`${process.env.BACKEND_URL}/tracking-reports`);
+      const response = await fetch(`${BACKEND_URL}/tracking-reports`);
       const data = await response.json();
       setTrackingReports(data.trackingReports);
     } catch (error) {
@@ -27,7 +28,7 @@ const App = () => {
 
   // Handle Google login
   const handleGoogleLogin = () => {
-    window.location.href = `${process.env.BACKEND_URL}/auth/google`;
+    window.location.href = `${BACKEND_URL}/auth/google`;
   };
 
   useEffect(() => {
@@ -40,11 +41,13 @@ const App = () => {
         user={user}
         setSelectedCampaign={setSelectedCampaign}
         setShowTrackingReports={setShowTrackingReports}
-        handleGoogleLogin={handleGoogleLogin} // Pass handleGoogleLogin as a prop
+        handleGoogleLogin={handleGoogleLogin}
       />
       <div className="main-content">
         {!user ? (
-          <Login handleGoogleLogin={handleGoogleLogin} />
+          <div className="login-message">
+            <p>Please log in to start sending emails.</p>
+          </div>
         ) : showTrackingReports ? (
           <TrackingReports trackingReports={trackingReports} />
         ) : selectedCampaign ? (

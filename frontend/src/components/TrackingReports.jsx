@@ -1,10 +1,29 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
-const TrackingReports = ({ trackingReports }) => {
+// Hardcoded backend URL
+const BACKEND_URL = "https://mailer-backend-7ay3.onrender.com";
+
+const TrackingReports = () => {
+  const [trackingReports, setTrackingReports] = useState([]);
+
+  const fetchTrackingReports = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/tracking-reports`);
+      const data = await response.json();
+      setTrackingReports(data.trackingReports);
+    } catch (error) {
+      console.error("Error fetching tracking reports:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchTrackingReports();
+  }, []);
+
   return (
-    <div>
+    <div className="tracking-reports">
       <h2>Tracking Reports</h2>
-      <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <table>
         <thead>
           <tr>
             <th>Subject</th>
@@ -26,4 +45,4 @@ const TrackingReports = ({ trackingReports }) => {
   );
 };
 
-export default TrackingReports; 
+export default TrackingReports;
