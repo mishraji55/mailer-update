@@ -13,6 +13,23 @@ const EmailSender = () => {
   const [showTrackingReports, setShowTrackingReports] = useState(false);
   const [user, setUser] = useState(null); // Track logged-in user
 
+  // Fetch the logged-in user's details
+  const fetchUser = async () => {
+    try {
+      const response = await fetch("https://mailer-backend-7ay3.onrender.com/auth/user", {
+        credentials: "include", // Include cookies for session-based authentication
+      });
+      const data = await response.json();
+      if (response.ok) {
+        setUser(data.user); // Set the user state
+      } else {
+        setUser(null); // No user is logged in
+      }
+    } catch (error) {
+      console.error("Error fetching user:", error);
+    }
+  };
+
   // Fetch tracking reports from the backend
   const fetchTrackingReports = async () => {
     try {
@@ -47,9 +64,10 @@ const EmailSender = () => {
     return () => clearInterval(interval); // Cleanup interval on unmount
   }, [selectedCampaign]);
 
-  // Fetch tracking reports when the component mounts
+  // Fetch tracking reports and user when the component mounts
   useEffect(() => {
     fetchTrackingReports();
+    fetchUser(); // Fetch the logged-in user
   }, []);
 
   // Handle Google OAuth2 login
