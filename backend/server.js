@@ -1,4 +1,4 @@
-const express = require("express");
+:const express = require("express");
 const nodemailer = require("nodemailer");
 const multer = require("multer");
 const csvParser = require("csv-parser");
@@ -76,7 +76,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: `${process.env.BACKEND_URL}/auth/google/callback`,
+      callbackURL: "https://mailer-backend-7ay3.onrender.com/auth/google/callback",
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -123,18 +123,10 @@ app.get(
   "/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/login" }),
   (req, res) => {
-    // Redirect to the frontend root URL after successful login
-    res.redirect(process.env.FRONTEND_URL);
+    // Redirect to the frontend dashboard after successful login
+    res.redirect("https://mailer1-d1qw.onrender.com/dashboard");
   }
 );
-
-// Fetch the logged-in user's details
-app.get("/auth/user", (req, res) => {
-  if (req.isAuthenticated()) {
-    return res.status(200).json({ user: req.user });
-  }
-  res.status(401).json({ message: "Not authenticated" });
-});
 
 // Middleware to check if the user is authenticated
 const isAuthenticated = (req, res, next) => {
@@ -218,9 +210,9 @@ app.post("/send-email", isAuthenticated, upload.fields([{ name: "csvFile" }, { n
         const recipientData = newCampaign.recipients.find((r) => r.email === recipient.email);
         const trackingId = recipientData.trackingId;
 
-        const trackingPixel = `<img src="${process.env.BACKEND_URL}/track/${trackingId}" width="1" height="1" style="display:none;" />`;
-        const trackedLink = `${process.env.BACKEND_URL}/click/${trackingId}`;
-        const unsubscribeLink = `<p>If you wish to unsubscribe, click <a href="${process.env.BACKEND_URL}/unsubscribe/${encodeURIComponent(
+        const trackingPixel = `<img src="https://mailer-backend-7ay3.onrender.com/track/${trackingId}" width="1" height="1" style="display:none;" />`;
+        const trackedLink = `https://mailer-backend-7ay3.onrender.com/click/${trackingId}`;
+        const unsubscribeLink = `<p>If you wish to unsubscribe, click <a href="https://mailer-backend-7ay3.onrender.com/unsubscribe/${encodeURIComponent(
           recipient.email
         )}">here</a>.</p>`;
 
@@ -303,7 +295,7 @@ app.get("/click/:trackingId", async (req, res) => {
     }
   }
 
-  res.redirect(process.env.FRONTEND_URL);
+  res.redirect("https://mailer1-d1qw.onrender.com");
 });
 
 // Fetch tracking reports
