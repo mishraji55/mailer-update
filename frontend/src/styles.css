@@ -94,3 +94,31 @@
   cursor: pointer;
   margin-bottom: 10px;
 }
+
+/* Login button styles */
+.login-button-container {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+}
+
+.login-button {
+  padding: 10px 20px;
+  background-color: #4285f4;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.login-button:hover {
+  background-color: #357abd;
+}
+
+/* Disabled form styles */
+input:disabled,
+textarea:disabled,
+button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
