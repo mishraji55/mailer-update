@@ -11,18 +11,24 @@ const mongoose = require("mongoose");
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const session = require("express-session");
+const cors = require("cors");
 require("dotenv").config(); // Load environment variables
 
 const app = express();
-const cors = require("cors");
 const upload = multer({ dest: "uploads/" });
 
 // Define frontend and backend URLs
 const FRONTEND_URL = process.env.FRONTEND_URL || "https://mailer1-d1qw.onrender.com";
 const BACKEND_URL = process.env.BACKEND_URL || "https://mailer-backend-7ay3.onrender.com";
 
+// Middleware
 app.use(express.json());
-app.use(cors({ origin: FRONTEND_URL, credentials: true })); // Allow CORS with credentials
+app.use(
+  cors({
+    origin: FRONTEND_URL,
+    credentials: true, // Allow cookies
+  })
+);
 
 // Session setup for Passport
 app.use(
@@ -36,8 +42,12 @@ app.use(
 app.use(passport.initialize());
 app.use(passport.session());
 
-// Debugging: Log the MongoDB connection string
+// Debugging: Log environment variables
 console.log("MONGODB_URI:", process.env.MONGODB_URI);
+console.log("GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID);
+console.log("GOOGLE_CLIENT_SECRET:", process.env.GOOGLE_CLIENT_SECRET);
+console.log("BACKEND_URL:", BACKEND_URL);
+console.log("FRONTEND_URL:", FRONTEND_URL);
 
 // Connect to MongoDB
 mongoose
@@ -85,6 +95,10 @@ passport.use(
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
+        console.log("Google OAuth2 profile received:", profile);
+        console.log("Access Token:", accessToken);
+        console.log("Refresh Token:", refreshToken);
+
         // Save or update user in the database
         const user = await User.findOneAndUpdate(
           { email: profile.emails[0].value },
@@ -98,6 +112,7 @@ passport.use(
         );
         done(null, user);
       } catch (err) {
+        console.error("Error in Google OAuth2 strategy:", err);
         done(err, null);
       }
     }
@@ -118,9 +133,12 @@ passport.deserializeUser(async (id, done) => {
 // Google OAuth2 login route
 app.get(
   "/auth/google",
-  passport.authenticate("google", {
-    scope: ["profile", "email", "https://www.googleapis.com/auth/gmail.send"],
-  })
+  (req, res, next) => {
+    console.log("Google OAuth2 authentication initiated");
+    passport.authenticate("google", {
+      scope: ["profile", "email", "https://www.googleapis.com/auth/gmail.send"],
+    })(req, res, next);
+  }
 );
 
 // Google OAuth2 callback route
@@ -128,7 +146,7 @@ app.get(
   "/auth/google/callback",
   passport.authenticate("google", { failureRedirect: `${FRONTEND_URL}/login` }),
   (req, res) => {
-    // Redirect to the frontend after successful login
+    console.log("Google OAuth2 callback triggered. User:", req.user);
     res.redirect(FRONTEND_URL);
   }
 );
@@ -143,6 +161,7 @@ const isAuthenticated = (req, res, next) => {
 
 // Fetch the logged-in user's details
 app.get("/auth/user", isAuthenticated, (req, res) => {
+  console.log("Fetching user data for:", req.user.email);
   res.json({ user: req.user });
 });
 
