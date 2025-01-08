@@ -18,11 +18,11 @@ const cors = require("cors");
 const upload = multer({ dest: "uploads/" });
 
 // Define frontend and backend URLs
-const FRONTEND_URL = "https://mailer1-d1qw.onrender.com";
-const BACKEND_URL = "https://mailer-backend-7ay3.onrender.com";
+const FRONTEND_URL = process.env.FRONTEND_URL || "https://mailer1-d1qw.onrender.com";
+const BACKEND_URL = process.env.BACKEND_URL || "https://mailer-backend-7ay3.onrender.com";
 
 app.use(express.json());
-app.use(cors());
+app.use(cors({ origin: FRONTEND_URL, credentials: true })); // Allow CORS with credentials
 
 // Session setup for Passport
 app.use(
@@ -30,6 +30,7 @@ app.use(
     secret: process.env.SESSION_SECRET || "your-secret-key",
     resave: false,
     saveUninitialized: true,
+    cookie: { secure: process.env.NODE_ENV === "production" }, // Use secure cookies in production
   })
 );
 app.use(passport.initialize());
@@ -116,21 +117,19 @@ passport.deserializeUser(async (id, done) => {
 
 // Google OAuth2 login route
 app.get(
-  "/auth/google/callback",
-  passport.authenticate("google", { failureRedirect: "/login" }),
-  (req, res) => {
-    // Return user data as JSON
-    res.json({ user: req.user });
-  }
+  "/auth/google",
+  passport.authenticate("google", {
+    scope: ["profile", "email", "https://www.googleapis.com/auth/gmail.send"],
+  })
 );
 
 // Google OAuth2 callback route
 app.get(
   "/auth/google/callback",
-  passport.authenticate("google", { failureRedirect: "/login" }),
+  passport.authenticate("google", { failureRedirect: `${FRONTEND_URL}/login` }),
   (req, res) => {
-    // Redirect to the frontend dashboard after successful login
-    res.redirect(`${FRONTEND_URL}/dashboard`);
+    // Redirect to the frontend after successful login
+    res.redirect(FRONTEND_URL);
   }
 );
 
@@ -141,6 +140,11 @@ const isAuthenticated = (req, res, next) => {
   }
   res.status(401).send({ message: "Unauthorized" });
 };
+
+// Fetch the logged-in user's details
+app.get("/auth/user", isAuthenticated, (req, res) => {
+  res.json({ user: req.user });
+});
 
 // Handle sending emails
 app.post("/send-email", isAuthenticated, upload.fields([{ name: "csvFile" }, { name: "contentFile" }]), async (req, res) => {
@@ -283,7 +287,7 @@ app.get("/track/:trackingId", async (req, res) => {
     }
   }
 
-  res.sendFile(path.join(__dirname, "tracking-pixels.png"));
+  res.sendFile(path.join(__dirname, "tracking-pixel.png"));
 });
 
 // Handle click tracking
