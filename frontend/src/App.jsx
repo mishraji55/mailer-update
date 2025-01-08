@@ -1,22 +1,18 @@
 import React, { useState, useEffect } from "react";
-import { BrowserRouter as Router, Route, Routes, useNavigate } from "react-router-dom";
-import Sidebar from "./components/Sidebar";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import CampaignForm from "./components/CampaignForm";
 import TrackingReports from "./components/TrackingReports";
 import CampaignDetails from "./components/CampaignDetails";
-import CampaignList from "./components/CampaignList";
-import Login from "./components/Login";
+import Sidebar from "./components/Sidebar";
 import "./styles.css";
 
 const BACKEND_URL = "https://mailer-backend-7ay3.onrender.com";
 
 const App = () => {
-  const [user, setUser] = useState(null);
-  const [showTrackingReports, setShowTrackingReports] = useState(false);
-  const [selectedCampaign, setSelectedCampaign] = useState(null);
+  const [user, setUser] = useState(null); // Track user login state
   const [trackingReports, setTrackingReports] = useState([]);
-  const navigate = useNavigate();
 
+  // Fetch tracking reports
   const fetchTrackingReports = async () => {
     try {
       const response = await fetch(`${BACKEND_URL}/tracking-reports`);
@@ -27,80 +23,71 @@ const App = () => {
     }
   };
 
+  // Handle Google login
   const handleGoogleLogin = () => {
     window.location.href = `${BACKEND_URL}/auth/google`;
   };
 
+  // Check if the user is logged in
   useEffect(() => {
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
-      setUser(JSON.parse(storedUser));
+      setUser(JSON.parse(storedUser)); // Set user from localStorage
     }
   }, []);
 
-  useEffect(() => {
-    if (user) {
-      navigate("/campaign");
-    }
-  }, [user, navigate]);
-
+  // Fetch tracking reports when the component mounts
   useEffect(() => {
     fetchTrackingReports();
   }, []);
 
   return (
     <div className="app-container">
-      {user && <Sidebar
-        user={user}
-        setSelectedCampaign={setSelectedCampaign}
-        setShowTrackingReports={setShowTrackingReports}
-        handleGoogleLogin={handleGoogleLogin}
-      />}
+      {/* Conditionally render Sidebar only if user is logged in */}
+      {user && <Sidebar user={user} />}
+
       <div className="main-content">
         <Routes>
+          {/* Main Page (CampaignForm) */}
           <Route
             path="/"
             element={
-              !user ? (
-                <Login handleGoogleLogin={handleGoogleLogin} />
-              ) : (
-                <CampaignForm />
-              )
+              <CampaignForm
+                user={user}
+                handleGoogleLogin={handleGoogleLogin}
+                trackingReports={trackingReports}
+              />
             }
           />
-          <Route
-            path="/campaign"
-            element={
-              user ? (
-                <>
-                  <CampaignForm />
-                  <CampaignList
-                    campaigns={trackingReports}
-                    onSelectCampaign={(campaign) => setSelectedCampaign(campaign)}
-                  />
-                </>
-              ) : (
-                <Login handleGoogleLogin={handleGoogleLogin} />
-              )
-            }
-          />
+
+          {/* Tracking Reports Route */}
           <Route
             path="/tracking-reports"
             element={
               user ? (
                 <TrackingReports trackingReports={trackingReports} />
               ) : (
-                <Login handleGoogleLogin={handleGoogleLogin} />
+                <CampaignForm
+                  user={user}
+                  handleGoogleLogin={handleGoogleLogin}
+                  trackingReports={trackingReports}
+                />
               )
             }
           />
+
+          {/* Campaign Details Route */}
           <Route
             path="/campaign-details/:campaignId"
             element={
               user ? (
-                <CampaignDetails campaign={selectedCampaign} />
+                <CampaignDetails />
               ) : (
-                <Login handleGoogleLogin={handleGoogleLogin} />
+                <CampaignForm
+                  user={user}
+                  handleGoogleLogin={handleGoogleLogin}
+                  trackingReports={trackingReports}
+                />
               )
             }
           />
@@ -110,6 +97,7 @@ const App = () => {
   );
 };
 
+// Wrap the App component with Router
 const AppWrapper = () => (
   <Router>
     <App />

@@ -1,107 +1,47 @@
-import React, { useState } from "react";
+import React from "react";
 
-const BACKEND_URL = "https://mailer-backend-7ay3.onrender.com";
-
-const CampaignForm = () => {
-  const [csvFile, setCsvFile] = useState(null);
-  const [contentFile, setContentFile] = useState(null);
-  const [manualText, setManualText] = useState("");
-  const [subject, setSubject] = useState("");
-  const [isScheduled, setIsScheduled] = useState(false);
-  const [scheduleDate, setScheduleDate] = useState("");
-  const [status, setStatus] = useState("");
-
-  const handleSendEmail = async () => {
-    const formData = new FormData();
-    formData.append("csvFile", csvFile);
-    formData.append("contentFile", contentFile);
-    formData.append("manualText", manualText);
-    formData.append("subject", subject);
-    formData.append("isScheduled", isScheduled);
-    if (isScheduled) formData.append("sendAt", scheduleDate);
-
-    try {
-      const response = await fetch(`${BACKEND_URL}/send-email`, {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json();
-      if (response.ok) {
-        setStatus(data.message || "Emails sent successfully!");
-      } else {
-        setStatus(data.message || "Error sending email");
-      }
-    } catch (error) {
-      setStatus("An error occurred while sending the email.");
-    }
-  };
-
+const CampaignForm = ({ user, handleGoogleLogin, trackingReports }) => {
   return (
     <div className="campaign-form">
-      <h1>Email Sender</h1>
-      <div className="form-group">
-        <label htmlFor="csvUpload">Upload CSV File with Recipients:</label>
-        <input
-          id="csvUpload"
-          type="file"
-          onChange={(e) => setCsvFile(e.target.files[0])}
-          accept=".csv"
-        />
-      </div>
-      <div className="form-group">
-        <label htmlFor="subject">Email Subject:</label>
-        <input
-          id="subject"
-          type="text"
-          value={subject}
-          onChange={(e) => setSubject(e.target.value)}
-          placeholder="Enter email subject"
-        />
-      </div>
-      <div className="form-group">
-        <label htmlFor="manualText">Email Content (Text):</label>
-        <textarea
-          id="manualText"
-          value={manualText}
-          onChange={(e) => setManualText(e.target.value)}
-          placeholder="Enter your email content here"
-          rows="5"
-        />
-      </div>
-      <div className="form-group">
-        <label htmlFor="contentFile">Or Upload HTML/Markdown File:</label>
-        <input
-          id="contentFile"
-          type="file"
-          onChange={(e) => setContentFile(e.target.files[0])}
-          accept=".html,.md"
-        />
-      </div>
-      <div className="form-group">
-        <label htmlFor="scheduleEmail">Schedule Email:</label>
-        <input
-          id="scheduleEmail"
-          type="checkbox"
-          checked={isScheduled}
-          onChange={() => setIsScheduled(!isScheduled)}
-        />
-      </div>
-      {isScheduled && (
-        <div className="form-group">
-          <label htmlFor="scheduleDate">Select Date and Time:</label>
-          <input
-            id="scheduleDate"
-            type="datetime-local"
-            value={scheduleDate}
-            onChange={(e) => setScheduleDate(e.target.value)}
-          />
+      <h1>Campaign Form</h1>
+
+      {/* Show login button if user is not logged in */}
+      {!user && (
+        <div className="login-prompt">
+          <p>Please log in to access the features.</p>
+          <button onClick={handleGoogleLogin} className="login-button">
+            Login with Google
+          </button>
         </div>
       )}
-      <button onClick={handleSendEmail} className="send-button">
-        Send Email
-      </button>
-      <p className="status-message">{status}</p>
+
+      {/* Show features if user is logged in */}
+      {user && (
+        <>
+          <form>
+            <label>Campaign Name:</label>
+            <input type="text" placeholder="Enter campaign name" />
+
+            <label>Recipient Emails:</label>
+            <textarea placeholder="Enter recipient emails" />
+
+            <label>Email Content:</label>
+            <textarea placeholder="Enter email content" />
+
+            <button type="submit">Create Campaign</button>
+          </form>
+
+          {/* Display tracking reports (if applicable) */}
+          <div className="tracking-reports">
+            <h2>Tracking Reports</h2>
+            <ul>
+              {trackingReports.map((report, index) => (
+                <li key={index}>{report.name}</li>
+              ))}
+            </ul>
+          </div>
+        </>
+      )}
     </div>
   );
 };
