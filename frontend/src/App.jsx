@@ -9,17 +9,18 @@ const EmailSender = () => {
   const [scheduleDate, setScheduleDate] = useState("");
   const [status, setStatus] = useState("");
   const [trackingReports, setTrackingReports] = useState([]);
-  const [selectedCampaign, setSelectedCampaign] = useState(null);
-  const [showTrackingReports, setShowTrackingReports] = useState(false); // New state for tracking reports page
+  const [selectedCampaign, setSelectedCampaign] = useState({ recipients: [] }); // Initialize with default structure
+  const [showTrackingReports, setShowTrackingReports] = useState(false);
 
   // Fetch tracking reports from the backend
   const fetchTrackingReports = async () => {
     try {
       const response = await fetch("https://mailer-backend-7ay3.onrender.com/tracking-reports");
       const data = await response.json();
-      setTrackingReports(data.trackingReports);
+      setTrackingReports(data.trackingReports || []); // Ensure it's an array
     } catch (error) {
       console.error("Error fetching tracking reports:", error);
+      setTrackingReports([]); // Reset to avoid undefined errors
     }
   };
 
@@ -28,16 +29,17 @@ const EmailSender = () => {
     try {
       const response = await fetch(`https://mailer-backend-7ay3.onrender.com/campaign-details/${campaignId}`);
       const data = await response.json();
-      setSelectedCampaign(data);
+      setSelectedCampaign(data || { recipients: [] }); // Ensure it has a valid structure
     } catch (error) {
       console.error("Error fetching campaign details:", error);
+      setSelectedCampaign({ recipients: [] }); // Reset to avoid undefined errors
     }
   };
 
   // Auto-refresh campaign data every 1 second
   useEffect(() => {
     const interval = setInterval(() => {
-      if (selectedCampaign) {
+      if (selectedCampaign && selectedCampaign._id) {
         fetchCampaignDetails(selectedCampaign._id); // Refresh selected campaign data
       }
       fetchTrackingReports(); // Refresh the list of campaigns
@@ -54,6 +56,11 @@ const EmailSender = () => {
   const handleSendEmail = async () => {
     if (!csvFile) {
       setStatus("Please upload a CSV file with recipients.");
+      return;
+    }
+
+    if (!subject) {
+      setStatus("Please enter an email subject.");
       return;
     }
 
@@ -102,7 +109,7 @@ const EmailSender = () => {
           <li style={{ marginBottom: "10px" }}>
             <button
               onClick={() => {
-                setSelectedCampaign(null);
+                setSelectedCampaign({ recipients: [] });
                 setShowTrackingReports(false); // Reset tracking reports page
               }}
               style={{ width: "100%", padding: "10px", backgroundColor: "#4CAF50", color: "white", border: "none", cursor: "pointer" }}
@@ -171,7 +178,7 @@ const EmailSender = () => {
               </tbody>
             </table>
           </div>
-        ) : selectedCampaign ? (
+        ) : selectedCampaign && selectedCampaign.recipients ? (
           // Campaign Details
           <div>
             <h2>{selectedCampaign.subject}</h2>
