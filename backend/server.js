@@ -8,7 +8,7 @@ const emailValidator = require("email-validator");
 const { v4: uuidv4 } = require("uuid");
 const schedule = require("node-schedule");
 const mongoose = require("mongoose");
-require("dotenv").config();
+require("dotenv").config(); // Load environment variables
 
 const app = express();
 const cors = require("cors");
@@ -17,10 +17,16 @@ const upload = multer({ dest: "uploads/" });
 app.use(express.json());
 app.use(cors());
 
+// Debugging: Log the MongoDB connection string
+console.log("MONGODB_URI:", process.env.MONGODB_URI);
+
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log("Connected to MongoDB"))
-  .catch((err) => console.error("Failed to connect to MongoDB:", err));
+  .catch((err) => {
+    console.error("Failed to connect to MongoDB:", err.message);
+    process.exit(1); // Exit the application if MongoDB connection fails
+  });
 
 // Define Campaign Schema
 const campaignSchema = new mongoose.Schema({
@@ -227,7 +233,7 @@ app.get("/unsubscribe/:email", (req, res) => {
 });
 
 // Start the server
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 10000;
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
 });
