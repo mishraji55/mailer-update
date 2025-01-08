@@ -1,8 +1,12 @@
+import React from "react";
+
 const Login = ({ handleGoogleLogin }) => (
-  <div>
+  <div className="login-container">
     <h1>Welcome to Email Sender</h1>
     <p>Please log in with Google to start sending emails.</p>
-    <button onClick={handleGoogleLogin}>Login with Google</button>
+    <button onClick={handleGoogleLogin} className="login-button">
+      Login with Google
+    </button>
   </div>
 );
 

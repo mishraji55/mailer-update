@@ -1,11 +1,11 @@
-// src/App.jsx
 import React, { useState, useEffect } from "react";
 import Sidebar from "./components/Sidebar";
 import Login from "./components/Login";
 import CampaignForm from "./components/CampaignForm";
 import TrackingReports from "./components/TrackingReports";
 import CampaignDetails from "./components/CampaignDetails";
-import CampaignList from "./components/CampaignList"; 
+import CampaignList from "./components/CampaignList";
+
 
 const App = () => {
   const [user, setUser] = useState(null);
@@ -24,20 +24,26 @@ const App = () => {
     }
   };
 
+  // Handle Google login
+  const handleGoogleLogin = () => {
+    window.location.href = `${process.env.BACKEND_URL}/auth/google`;
+  };
+
   useEffect(() => {
     fetchTrackingReports();
   }, []);
 
   return (
-    <div style={{ display: "flex" }}>
+    <div className="app-container">
       <Sidebar
         user={user}
         setSelectedCampaign={setSelectedCampaign}
         setShowTrackingReports={setShowTrackingReports}
+        handleGoogleLogin={handleGoogleLogin} // Pass handleGoogleLogin as a prop
       />
-      <div style={{ flex: 1, padding: "20px" }}>
+      <div className="main-content">
         {!user ? (
-          <Login handleGoogleLogin={() => window.location.href = `${process.env.BACKEND_URL}/auth/google`} />
+          <Login handleGoogleLogin={handleGoogleLogin} />
         ) : showTrackingReports ? (
           <TrackingReports trackingReports={trackingReports} />
         ) : selectedCampaign ? (
