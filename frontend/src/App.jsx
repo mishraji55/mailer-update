@@ -10,7 +10,8 @@ const EmailSender = () => {
   const [status, setStatus] = useState("");
   const [trackingReports, setTrackingReports] = useState([]);
   const [selectedCampaign, setSelectedCampaign] = useState(null);
-  const [showTrackingReports, setShowTrackingReports] = useState(false); // New state for tracking reports page
+  const [showTrackingReports, setShowTrackingReports] = useState(false);
+  const [user, setUser] = useState(null); // Track logged-in user
 
   // Fetch tracking reports from the backend
   const fetchTrackingReports = async () => {
@@ -51,6 +52,12 @@ const EmailSender = () => {
     fetchTrackingReports();
   }, []);
 
+  // Handle Google OAuth2 login
+  const handleGoogleLogin = () => {
+    window.location.href = "https://mailer-backend-7ay3.onrender.com/auth/google";
+  };
+
+  // Handle sending emails
   const handleSendEmail = async () => {
     if (!csvFile) {
       setStatus("Please upload a CSV file with recipients.");
@@ -99,32 +106,46 @@ const EmailSender = () => {
       <div style={{ width: "200px", backgroundColor: "#f4f4f4", padding: "20px" }}>
         <h3>Menu</h3>
         <ul style={{ listStyle: "none", padding: 0 }}>
-          <li style={{ marginBottom: "10px" }}>
-            <button
-              onClick={() => {
-                setSelectedCampaign(null);
-                setShowTrackingReports(false); // Reset tracking reports page
-              }}
-              style={{ width: "100%", padding: "10px", backgroundColor: "#4CAF50", color: "white", border: "none", cursor: "pointer" }}
-            >
-              New Campaign
-            </button>
-          </li>
-          <li style={{ marginBottom: "10px" }}>
-            <button
-              onClick={() => {
-                setShowTrackingReports(true); // Show tracking reports page
-                fetchTrackingReports(); // Fetch latest tracking reports
-              }}
-              style={{ width: "100%", padding: "10px", backgroundColor: "#4CAF50", color: "white", border: "none", cursor: "pointer" }}
-            >
-              Tracking Reports
-            </button>
-          </li>
+          {!user && (
+            <li style={{ marginBottom: "10px" }}>
+              <button
+                onClick={handleGoogleLogin}
+                style={{ width: "100%", padding: "10px", backgroundColor: "#4285F4", color: "white", border: "none", cursor: "pointer" }}
+              >
+                Login with Google
+              </button>
+            </li>
+          )}
+          {user && (
+            <>
+              <li style={{ marginBottom: "10px" }}>
+                <button
+                  onClick={() => {
+                    setSelectedCampaign(null);
+                    setShowTrackingReports(false); // Reset tracking reports page
+                  }}
+                  style={{ width: "100%", padding: "10px", backgroundColor: "#4CAF50", color: "white", border: "none", cursor: "pointer" }}
+                >
+                  New Campaign
+                </button>
+              </li>
+              <li style={{ marginBottom: "10px" }}>
+                <button
+                  onClick={() => {
+                    setShowTrackingReports(true); // Show tracking reports page
+                    fetchTrackingReports(); // Fetch latest tracking reports
+                  }}
+                  style={{ width: "100%", padding: "10px", backgroundColor: "#4CAF50", color: "white", border: "none", cursor: "pointer" }}
+                >
+                  Tracking Reports
+                </button>
+              </li>
+            </>
+          )}
         </ul>
 
         {/* List of Campaigns */}
-        {!showTrackingReports && (
+        {user && !showTrackingReports && (
           <>
             <h4>Campaigns</h4>
             <ul style={{ listStyle: "none", padding: 0 }}>
@@ -148,7 +169,12 @@ const EmailSender = () => {
 
       {/* Main Content */}
       <div style={{ flex: 1, padding: "20px" }}>
-        {showTrackingReports ? (
+        {!user ? (
+          <div>
+            <h1>Welcome to Email Sender</h1>
+            <p>Please log in with Google to start sending emails.</p>
+          </div>
+        ) : showTrackingReports ? (
           // Tracking Reports Page
           <div>
             <h2>Tracking Reports</h2>
