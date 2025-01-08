@@ -8,18 +8,19 @@ const EmailSender = () => {
   const [isScheduled, setIsScheduled] = useState(false);
   const [scheduleDate, setScheduleDate] = useState("");
   const [status, setStatus] = useState("");
-  const [trackingReports, setTrackingReports] = useState([]);
-  const [selectedCampaign, setSelectedCampaign] = useState(null);
-  const [showTrackingReports, setShowTrackingReports] = useState(false); // New state for tracking reports page
+  const [trackingReports, setTrackingReports] = useState([]); // Initialize as an empty array
+  const [selectedCampaign, setSelectedCampaign] = useState(null); // Initialize as null
+  const [showTrackingReports, setShowTrackingReports] = useState(false);
 
   // Fetch tracking reports from the backend
   const fetchTrackingReports = async () => {
     try {
       const response = await fetch("https://mailer-backend-7ay3.onrender.com/tracking-reports");
       const data = await response.json();
-      setTrackingReports(data.trackingReports);
+      setTrackingReports(data.trackingReports || []); // Ensure it's always an array
     } catch (error) {
       console.error("Error fetching tracking reports:", error);
+      setTrackingReports([]); // Reset to avoid undefined errors
     }
   };
 
@@ -28,16 +29,17 @@ const EmailSender = () => {
     try {
       const response = await fetch(`https://mailer-backend-7ay3.onrender.com/campaign-details/${campaignId}`);
       const data = await response.json();
-      setSelectedCampaign(data);
+      setSelectedCampaign(data || { recipients: [] }); // Ensure it has a valid structure
     } catch (error) {
       console.error("Error fetching campaign details:", error);
+      setSelectedCampaign({ recipients: [] }); // Reset to avoid undefined errors
     }
   };
 
   // Auto-refresh campaign data every 1 second
   useEffect(() => {
     const interval = setInterval(() => {
-      if (selectedCampaign) {
+      if (selectedCampaign && selectedCampaign._id) {
         fetchCampaignDetails(selectedCampaign._id); // Refresh selected campaign data
       }
       fetchTrackingReports(); // Refresh the list of campaigns
@@ -57,6 +59,11 @@ const EmailSender = () => {
       return;
     }
 
+    if (!subject) {
+      setStatus("Please enter an email subject.");
+      return;
+    }
+
     if (!manualText && !contentFile) {
       setStatus("Please provide content: enter text or upload an HTML/Markdown file.");
       return;
@@ -69,7 +76,7 @@ const EmailSender = () => {
 
     const formData = new FormData();
     formData.append("csvFile", csvFile);
-    formData.append("contentFile", contentFile);
+    if (contentFile) formData.append("contentFile", contentFile);
     formData.append("manualText", manualText);
     formData.append("subject", subject);
     formData.append("isScheduled", isScheduled);
@@ -102,8 +109,15 @@ const EmailSender = () => {
           <li style={{ marginBottom: "10px" }}>
             <button
               onClick={() => {
-                setSelectedCampaign(null);
+                setSelectedCampaign(null); // Reset selected campaign to null
                 setShowTrackingReports(false); // Reset tracking reports page
+                setCsvFile(null); // Reset CSV file
+                setContentFile(null); // Reset content file
+                setManualText(""); // Reset manual text
+                setSubject(""); // Reset subject
+                setIsScheduled(false); // Reset schedule option
+                setScheduleDate(""); // Reset schedule date
+                setStatus(""); // Reset status message
               }}
               style={{ width: "100%", padding: "10px", backgroundColor: "#4CAF50", color: "white", border: "none", cursor: "pointer" }}
             >
@@ -128,7 +142,7 @@ const EmailSender = () => {
           <>
             <h4>Campaigns</h4>
             <ul style={{ listStyle: "none", padding: 0 }}>
-              {trackingReports.map((report) => (
+              {trackingReports && trackingReports.map((report) => (
                 <li key={report._id} style={{ marginBottom: "10px" }}>
                   <button
                     onClick={() => {
@@ -161,7 +175,7 @@ const EmailSender = () => {
                 </tr>
               </thead>
               <tbody>
-                {trackingReports.map((report) => (
+                {trackingReports && trackingReports.map((report) => (
                   <tr key={report._id}>
                     <td style={{ border: "1px solid #ddd", padding: "8px" }}>{report.subject}</td>
                     <td style={{ border: "1px solid #ddd", padding: "8px" }}>{report.ctr}</td>
@@ -185,7 +199,7 @@ const EmailSender = () => {
                 </tr>
               </thead>
               <tbody>
-                {selectedCampaign.recipients.map((recipient) => (
+                {selectedCampaign.recipients && selectedCampaign.recipients.map((recipient) => (
                   <tr key={recipient.email}>
                     <td style={{ border: "1px solid #ddd", padding: "8px" }}>{recipient.email}</td>
                     <td style={{ border: "1px solid #ddd", padding: "8px" }}>{recipient.status}</td>
