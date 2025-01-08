@@ -8,6 +8,9 @@ const emailValidator = require("email-validator");
 const { v4: uuidv4 } = require("uuid");
 const schedule = require("node-schedule");
 const mongoose = require("mongoose");
+const passport = require("passport");
+const GoogleStrategy = require("passport-google-oauth20").Strategy;
+const session = require("express-session");
 require("dotenv").config(); // Load environment variables
 
 const app = express();
@@ -17,52 +20,124 @@ const upload = multer({ dest: "uploads/" });
 app.use(express.json());
 app.use(cors());
 
+// Session setup for Passport
+app.use(
+  session({
+    secret: process.env.SESSION_SECRET || "your-secret-key",
+    resave: false,
+    saveUninitialized: true,
+  })
+);
+app.use(passport.initialize());
+app.use(passport.session());
+
 // Debugging: Log the MongoDB connection string
 console.log("MONGODB_URI:", process.env.MONGODB_URI);
 
 // Connect to MongoDB
-mongoose.connect(process.env.MONGODB_URI)
+mongoose
+  .connect(process.env.MONGODB_URI)
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => {
     console.error("Failed to connect to MongoDB:", err.message);
     process.exit(1); // Exit the application if MongoDB connection fails
   });
 
+// Define User Schema
+const userSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true },
+  emailService: { type: String, required: true }, // e.g., "gmail"
+  accessToken: { type: String, required: true },
+  refreshToken: { type: String },
+});
+
+const User = mongoose.model("User", userSchema);
+
 // Define Campaign Schema
 const campaignSchema = new mongoose.Schema({
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Link to user
   subject: String,
-  recipients: [{
-    email: String,
-    status: { type: String, default: "Not Sent" },
-    opened: { type: Boolean, default: false },
-    linkVisited: { type: Boolean, default: false },
-    trackingId: String,
-  }],
+  recipients: [
+    {
+      email: String,
+      status: { type: String, default: "Not Sent" },
+      opened: { type: Boolean, default: false },
+      linkVisited: { type: Boolean, default: false },
+      trackingId: String,
+    },
+  ],
 });
 
 const Campaign = mongoose.model("Campaign", campaignSchema);
 
-// Set up transporter for sending emails
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
+// Passport Google OAuth2 Configuration
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      callbackURL: "https://mailer-backend-7ay3.onrender.com/auth/google/callback",
+    },
+    async (accessToken, refreshToken, profile, done) => {
+      try {
+        // Save or update user in the database
+        const user = await User.findOneAndUpdate(
+          { email: profile.emails[0].value },
+          {
+            email: profile.emails[0].value,
+            emailService: "gmail",
+            accessToken,
+            refreshToken,
+          },
+          { upsert: true, new: true }
+        );
+        done(null, user);
+      } catch (err) {
+        done(err, null);
+      }
+    }
+  )
+);
+
+// Serialize and deserialize user
+passport.serializeUser((user, done) => done(null, user._id));
+passport.deserializeUser(async (id, done) => {
+  try {
+    const user = await User.findById(id);
+    done(null, user);
+  } catch (err) {
+    done(err, null);
+  }
 });
 
-// Helper function to replace tags with recipient data
-const replacePersonalizationTags = (content, recipientData) => {
-  let personalizedContent = content;
-  Object.keys(recipientData).forEach((key) => {
-    const tag = `{{${key}}}`;
-    personalizedContent = personalizedContent.replace(new RegExp(tag, "g"), recipientData[key]);
-  });
-  return personalizedContent;
+// Google OAuth2 login route
+app.get(
+  "/auth/google",
+  passport.authenticate("google", {
+    scope: ["profile", "email", "https://www.googleapis.com/auth/gmail.send"],
+  })
+);
+
+// Google OAuth2 callback route
+app.get(
+  "/auth/google/callback",
+  passport.authenticate("google", { failureRedirect: "/login" }),
+  (req, res) => {
+    // Redirect to the frontend dashboard after successful login
+    res.redirect("https://mailer1-d1qw.onrender.com/dashboard");
+  }
+);
+
+// Middleware to check if the user is authenticated
+const isAuthenticated = (req, res, next) => {
+  if (req.isAuthenticated()) {
+    return next();
+  }
+  res.status(401).send({ message: "Unauthorized" });
 };
 
 // Handle sending emails
-app.post("/send-email", upload.fields([{ name: "csvFile" }, { name: "contentFile" }]), async (req, res) => {
+app.post("/send-email", isAuthenticated, upload.fields([{ name: "csvFile" }, { name: "contentFile" }]), async (req, res) => {
   const { subject, manualText, isScheduled, sendAt } = req.body;
 
   if (!req.files || !req.files.csvFile) {
@@ -101,6 +176,7 @@ app.post("/send-email", upload.fields([{ name: "csvFile" }, { name: "contentFile
 
       // Create a new campaign in MongoDB
       const newCampaign = new Campaign({
+        userId: req.user._id, // Link campaign to the logged-in user
         subject,
         recipients: uniqueRecipients.map((recipient) => ({
           email: recipient.email,
@@ -116,6 +192,19 @@ app.post("/send-email", upload.fields([{ name: "csvFile" }, { name: "contentFile
         emailContent = fs.readFileSync(path.join(__dirname, contentFile.path), "utf-8");
       }
 
+      // Use the user's access token to send emails
+      const transporter = nodemailer.createTransport({
+        service: "gmail",
+        auth: {
+          type: "OAuth2",
+          user: req.user.email, // User's email
+          accessToken: req.user.accessToken, // User's access token
+          clientId: process.env.GOOGLE_CLIENT_ID,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          refreshToken: req.user.refreshToken,
+        },
+      });
+
       for (const recipient of uniqueRecipients) {
         const personalizedContent = replacePersonalizationTags(emailContent, recipient);
         const recipientData = newCampaign.recipients.find((r) => r.email === recipient.email);
@@ -130,7 +219,7 @@ app.post("/send-email", upload.fields([{ name: "csvFile" }, { name: "contentFile
         const finalHtml = `${personalizedContent}<p>Click <a href="${trackedLink}">here</a> to visit the link.</p>${trackingPixel}${unsubscribeLink}`;
 
         const mailOptions = {
-          from: process.env.EMAIL_USER,
+          from: req.user.email, // Use the user's email as the sender
           to: recipient.email,
           subject,
           text: personalizedContent, // Plain text fallback
@@ -210,9 +299,9 @@ app.get("/click/:trackingId", async (req, res) => {
 });
 
 // Fetch tracking reports
-app.get("/tracking-reports", async (req, res) => {
+app.get("/tracking-reports", isAuthenticated, async (req, res) => {
   try {
-    const campaigns = await Campaign.find({});
+    const campaigns = await Campaign.find({ userId: req.user._id }); // Fetch campaigns for the logged-in user
 
     // Calculate CTR and OTR for each campaign
     const trackingReports = campaigns.map((campaign) => {
@@ -239,7 +328,7 @@ app.get("/tracking-reports", async (req, res) => {
 });
 
 // Fetch campaign details
-app.get("/campaign-details/:campaignId", async (req, res) => {
+app.get("/campaign-details/:campaignId", isAuthenticated, async (req, res) => {
   const campaignId = req.params.campaignId;
 
   // Validate campaignId
@@ -248,7 +337,7 @@ app.get("/campaign-details/:campaignId", async (req, res) => {
   }
 
   try {
-    const campaign = await Campaign.findById(campaignId);
+    const campaign = await Campaign.findOne({ _id: campaignId, userId: req.user._id }); // Ensure the campaign belongs to the logged-in user
     if (!campaign) {
       return res.status(404).send({ message: "Campaign not found." });
     }
