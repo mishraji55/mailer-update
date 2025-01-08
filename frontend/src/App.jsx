@@ -34,140 +34,71 @@ const EmailSender = () => {
     }
   };
 
-  // Fetch tracking reports from the backend
-  const fetchTrackingReports = async () => {
-    try {
-      const response = await fetch(`${BACKEND_URL}/tracking-reports`);
-      const data = await response.json();
-      setTrackingReports(data.trackingReports);
-    } catch (error) {
-      console.error("Error fetching tracking reports:", error);
-    }
-  };
-
-  // Fetch campaign details
-  const fetchCampaignDetails = async (campaignId) => {
-    try {
-      const response = await fetch(`${BACKEND_URL}/campaign-details/${campaignId}`);
-      const data = await response.json();
-      setSelectedCampaign(data);
-    } catch (error) {
-      console.error("Error fetching campaign details:", error);
-    }
-  };
-
-  // Auto-refresh campaign data every 1 second
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (selectedCampaign) {
-        fetchCampaignDetails(selectedCampaign._id); // Refresh selected campaign data
-      }
-      fetchTrackingReports(); // Refresh the list of campaigns
-    }, 1000); // Refresh every 1 second
-
-    return () => clearInterval(interval); // Cleanup interval on unmount
-  }, [selectedCampaign]);
-
-  // Fetch tracking reports and user when the component mounts
-  useEffect(() => {
-    fetchTrackingReports();
-    fetchUser(); // Fetch the logged-in user
-  }, []);
-
   // Handle Google OAuth2 login
   const handleGoogleLogin = () => {
     window.location.href = `${BACKEND_URL}/auth/google`;
   };
 
-  // Handle sending emails
-  const handleSendEmail = async () => {
-    if (!csvFile) {
-      setStatus("Please upload a CSV file with recipients.");
-      return;
-    }
+  // Check if the user is logged in when the component mounts
+  useEffect(() => {
+    fetchUser();
+  }, []);
 
-    if (!manualText && !contentFile) {
-      setStatus("Please provide content: enter text or upload an HTML/Markdown file.");
-      return;
-    }
+  // If the user is not logged in, show the login button
+  if (!user) {
+    return (
+      <div style={{ textAlign: "center", marginTop: "50px" }}>
+        <h1>Welcome to Email Sender</h1>
+        <p>Please log in with Google to start sending emails.</p>
+        <button
+          onClick={handleGoogleLogin}
+          style={{
+            padding: "10px 20px",
+            backgroundColor: "#4285F4",
+            color: "white",
+            border: "none",
+            cursor: "pointer",
+          }}
+        >
+          Login with Google
+        </button>
+      </div>
+    );
+  }
 
-    if (manualText && contentFile) {
-      setStatus("You can only use one content option: text or HTML/Markdown file.");
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("csvFile", csvFile);
-    formData.append("contentFile", contentFile);
-    formData.append("manualText", manualText);
-    formData.append("subject", subject);
-    formData.append("isScheduled", isScheduled);
-    if (isScheduled) formData.append("sendAt", scheduleDate);
-
-    try {
-      const response = await fetch(`${BACKEND_URL}/send-email`, {
-        method: "POST",
-        body: formData,
-      });
-
-      const data = await response.json();
-      if (response.ok) {
-        setStatus(data.message || "Emails sent successfully!");
-        fetchCampaignDetails(data.campaignId); // Use the correct campaignId
-      } else {
-        setStatus(data.message || "Error sending email");
-      }
-    } catch (error) {
-      setStatus("An error occurred while sending the email.");
-    }
-  };
-
+  // If the user is logged in, show the email features
   return (
     <div style={{ display: "flex" }}>
       {/* Sidebar */}
       <div style={{ width: "200px", backgroundColor: "#f4f4f4", padding: "20px" }}>
         <h3>Menu</h3>
         <ul style={{ listStyle: "none", padding: 0 }}>
-          {!user && (
-            <li style={{ marginBottom: "10px" }}>
-              <button
-                onClick={handleGoogleLogin}
-                style={{ width: "100%", padding: "10px", backgroundColor: "#4285F4", color: "white", border: "none", cursor: "pointer" }}
-              >
-                Login with Google
-              </button>
-            </li>
-          )}
-          {user && (
-            <>
-              <li style={{ marginBottom: "10px" }}>
-                <button
-                  onClick={() => {
-                    setSelectedCampaign(null);
-                    setShowTrackingReports(false); // Reset tracking reports page
-                  }}
-                  style={{ width: "100%", padding: "10px", backgroundColor: "#4CAF50", color: "white", border: "none", cursor: "pointer" }}
-                >
-                  New Campaign
-                </button>
-              </li>
-              <li style={{ marginBottom: "10px" }}>
-                <button
-                  onClick={() => {
-                    setShowTrackingReports(true); // Show tracking reports page
-                    fetchTrackingReports(); // Fetch latest tracking reports
-                  }}
-                  style={{ width: "100%", padding: "10px", backgroundColor: "#4CAF50", color: "white", border: "none", cursor: "pointer" }}
-                >
-                  Tracking Reports
-                </button>
-              </li>
-            </>
-          )}
+          <li style={{ marginBottom: "10px" }}>
+            <button
+              onClick={() => {
+                setSelectedCampaign(null);
+                setShowTrackingReports(false); // Reset tracking reports page
+              }}
+              style={{ width: "100%", padding: "10px", backgroundColor: "#4CAF50", color: "white", border: "none", cursor: "pointer" }}
+            >
+              New Campaign
+            </button>
+          </li>
+          <li style={{ marginBottom: "10px" }}>
+            <button
+              onClick={() => {
+                setShowTrackingReports(true); // Show tracking reports page
+                fetchTrackingReports(); // Fetch latest tracking reports
+              }}
+              style={{ width: "100%", padding: "10px", backgroundColor: "#4CAF50", color: "white", border: "none", cursor: "pointer" }}
+            >
+              Tracking Reports
+            </button>
+          </li>
         </ul>
 
         {/* List of Campaigns */}
-        {user && !showTrackingReports && (
+        {!showTrackingReports && (
           <>
             <h4>Campaigns</h4>
             <ul style={{ listStyle: "none", padding: 0 }}>
@@ -191,12 +122,7 @@ const EmailSender = () => {
 
       {/* Main Content */}
       <div style={{ flex: 1, padding: "20px" }}>
-        {!user ? (
-          <div>
-            <h1>Welcome to Email Sender</h1>
-            <p>Please log in with Google to start sending emails.</p>
-          </div>
-        ) : showTrackingReports ? (
+        {showTrackingReports ? (
           // Tracking Reports Page
           <div>
             <h2>Tracking Reports</h2>
