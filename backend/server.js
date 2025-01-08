@@ -25,6 +25,9 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+// In-memory store for tracking data
+const trackingDataStore = {};
+
 // Helper function to replace tags with recipient data
 const replacePersonalizationTags = (content, recipientData) => {
   let personalizedContent = content;
@@ -81,6 +84,8 @@ app.post("/send-email", upload.fields([{ name: "csvFile" }, { name: "contentFile
       for (const recipient of uniqueRecipients) {
         const personalizedContent = replacePersonalizationTags(emailContent, recipient);
         const trackingId = uuidv4();
+        trackingDataStore[trackingId] = { clicks: 0, emailsSent: 1 }; // Initialize tracking data
+
         const trackingPixel = `<img src="https://mailer-backend-7ay3.onrender.com/track/${trackingId}" width="1" height="1" style="display:none;" />`;
         const trackedLink = `https://mailer-backend-7ay3.onrender.com/click/${trackingId}`;
         const unsubscribeLink = `<p>If you wish to unsubscribe, click <a href="https://mailer-backend-7ay3.onrender.com/unsubscribe/${encodeURIComponent(
@@ -142,7 +147,26 @@ app.get("/track/:trackingId", (req, res) => {
 app.get("/click/:trackingId", (req, res) => {
   const trackingId = req.params.trackingId;
   console.log(`Link clicked. Tracking ID: ${trackingId}`);
+
+  // Increment click count for this tracking ID
+  if (trackingDataStore[trackingId]) {
+    trackingDataStore[trackingId].clicks += 1;
+  } else {
+    trackingDataStore[trackingId] = { clicks: 1, emailsSent: 0 };
+  }
+
   res.redirect("https://mailer1-d1qw.onrender.com");
+});
+
+// Fetch tracking data
+app.get("/tracking-data", (req, res) => {
+  const trackingData = Object.keys(trackingDataStore).map((trackingId) => {
+    const { clicks, emailsSent } = trackingDataStore[trackingId];
+    const ctr = emailsSent > 0 ? ((clicks / emailsSent) * 100).toFixed(2) : 0;
+    return { trackingId, clicks, emailsSent, ctr };
+  });
+
+  res.status(200).json({ trackingData });
 });
 
 // Handle unsubscribe

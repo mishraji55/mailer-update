@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const EmailSender = () => {
   const [csvFile, setCsvFile] = useState(null);
@@ -8,6 +8,23 @@ const EmailSender = () => {
   const [isScheduled, setIsScheduled] = useState(false);
   const [scheduleDate, setScheduleDate] = useState("");
   const [status, setStatus] = useState("");
+  const [trackingData, setTrackingData] = useState([]); // State for tracking data
+
+  // Fetch tracking data from the backend
+  const fetchTrackingData = async () => {
+    try {
+      const response = await fetch("https://mailer-backend-7ay3.onrender.com/tracking-data");
+      const data = await response.json();
+      setTrackingData(data.trackingData);
+    } catch (error) {
+      console.error("Error fetching tracking data:", error);
+    }
+  };
+
+  // Fetch tracking data when the component mounts
+  useEffect(() => {
+    fetchTrackingData();
+  }, []);
 
   const handleSendEmail = async () => {
     if (!csvFile) {
@@ -42,6 +59,7 @@ const EmailSender = () => {
       const data = await response.json();
       if (response.ok) {
         setStatus(data.message || "Emails sent successfully!");
+        fetchTrackingData(); // Refresh tracking data after sending emails
       } else {
         setStatus(data.message || "Error sending email");
       }
@@ -152,6 +170,31 @@ const EmailSender = () => {
       <p style={{ marginTop: "20px", fontSize: "16px", color: "#555" }}>
         {status}
       </p>
+
+      {/* Display CTR Data */}
+      <div style={{ marginTop: "20px" }}>
+        <h2>Tracking Data</h2>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr>
+              <th style={{ border: "1px solid #ddd", padding: "8px" }}>Tracking ID</th>
+              <th style={{ border: "1px solid #ddd", padding: "8px" }}>Clicks</th>
+              <th style={{ border: "1px solid #ddd", padding: "8px" }}>Emails Sent</th>
+              <th style={{ border: "1px solid #ddd", padding: "8px" }}>CTR (%)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {trackingData.map((data) => (
+              <tr key={data.trackingId}>
+                <td style={{ border: "1px solid #ddd", padding: "8px" }}>{data.trackingId}</td>
+                <td style={{ border: "1px solid #ddd", padding: "8px" }}>{data.clicks}</td>
+                <td style={{ border: "1px solid #ddd", padding: "8px" }}>{data.emailsSent}</td>
+                <td style={{ border: "1px solid #ddd", padding: "8px" }}>{data.ctr}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
