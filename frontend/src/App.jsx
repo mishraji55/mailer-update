@@ -10,6 +10,7 @@ const EmailSender = () => {
   const [status, setStatus] = useState("");
   const [trackingReports, setTrackingReports] = useState([]);
   const [selectedCampaign, setSelectedCampaign] = useState(null);
+  const [showTrackingReports, setShowTrackingReports] = useState(false); // New state for tracking reports page
 
   // Fetch tracking reports from the backend
   const fetchTrackingReports = async () => {
@@ -100,7 +101,10 @@ const EmailSender = () => {
         <ul style={{ listStyle: "none", padding: 0 }}>
           <li style={{ marginBottom: "10px" }}>
             <button
-              onClick={() => setSelectedCampaign(null)}
+              onClick={() => {
+                setSelectedCampaign(null);
+                setShowTrackingReports(false); // Reset tracking reports page
+              }}
               style={{ width: "100%", padding: "10px", backgroundColor: "#4CAF50", color: "white", border: "none", cursor: "pointer" }}
             >
               New Campaign
@@ -108,7 +112,10 @@ const EmailSender = () => {
           </li>
           <li style={{ marginBottom: "10px" }}>
             <button
-              onClick={fetchTrackingReports}
+              onClick={() => {
+                setShowTrackingReports(true); // Show tracking reports page
+                fetchTrackingReports(); // Fetch latest tracking reports
+              }}
               style={{ width: "100%", padding: "10px", backgroundColor: "#4CAF50", color: "white", border: "none", cursor: "pointer" }}
             >
               Tracking Reports
@@ -117,24 +124,54 @@ const EmailSender = () => {
         </ul>
 
         {/* List of Campaigns */}
-        <h4>Campaigns</h4>
-        <ul style={{ listStyle: "none", padding: 0 }}>
-          {trackingReports.map((report) => (
-            <li key={report._id} style={{ marginBottom: "10px" }}>
-              <button
-                onClick={() => fetchCampaignDetails(report._id)}
-                style={{ width: "100%", padding: "10px", backgroundColor: "#4CAF50", color: "white", border: "none", cursor: "pointer" }}
-              >
-                {report.subject}
-              </button>
-            </li>
-          ))}
-        </ul>
+        {!showTrackingReports && (
+          <>
+            <h4>Campaigns</h4>
+            <ul style={{ listStyle: "none", padding: 0 }}>
+              {trackingReports.map((report) => (
+                <li key={report._id} style={{ marginBottom: "10px" }}>
+                  <button
+                    onClick={() => {
+                      setSelectedCampaign(report);
+                      setShowTrackingReports(false); // Hide tracking reports page
+                    }}
+                    style={{ width: "100%", padding: "10px", backgroundColor: "#4CAF50", color: "white", border: "none", cursor: "pointer" }}
+                  >
+                    {report.subject}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </div>
 
       {/* Main Content */}
       <div style={{ flex: 1, padding: "20px" }}>
-        {selectedCampaign ? (
+        {showTrackingReports ? (
+          // Tracking Reports Page
+          <div>
+            <h2>Tracking Reports</h2>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr>
+                  <th style={{ border: "1px solid #ddd", padding: "8px" }}>Subject</th>
+                  <th style={{ border: "1px solid #ddd", padding: "8px" }}>CTR (%)</th>
+                  <th style={{ border: "1px solid #ddd", padding: "8px" }}>OTR (%)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {trackingReports.map((report) => (
+                  <tr key={report._id}>
+                    <td style={{ border: "1px solid #ddd", padding: "8px" }}>{report.subject}</td>
+                    <td style={{ border: "1px solid #ddd", padding: "8px" }}>{report.ctr}</td>
+                    <td style={{ border: "1px solid #ddd", padding: "8px" }}>{report.otr}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : selectedCampaign ? (
           // Campaign Details
           <div>
             <h2>{selectedCampaign.subject}</h2>
@@ -223,7 +260,7 @@ const EmailSender = () => {
               />
             </div>
 
-            {/* Schedule Email Option */} // This is the checkbox for scheduling emails 
+            {/* Schedule Email Option */}
             <div style={{ marginBottom: "20px", display: "flex", alignItems: "center" }}>
               <label htmlFor="scheduleEmail" style={{ fontWeight: "bold" }}>
                 Schedule Email:
