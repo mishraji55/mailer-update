@@ -14,24 +14,37 @@ const cors = require("cors");
 const upload = multer({ dest: "uploads/" });
 
 app.use(express.json());
+app.use(express.urlencoded({ extended: true })); // Parse URL-encoded bodies
 
-
+// Define allowed origins for CORS
 const allowedOrigins = [
-  "https://mass-email-sender.onrender.com", 
+  "https://mass-email-sender.onrender.com", // Old frontend URL
+  "https://mailer1-d1qw.onrender.com", // New frontend URL
+  "http://localhost:3000", // For local development
 ];
 
+// Configure CORS
 app.use(
   cors({
     origin: function (origin, callback) {
+      console.log("Origin:", origin); // Log the origin for debugging
       if (allowedOrigins.includes(origin) || !origin) {
-        // Allow requests with no origin (e.g., Postman, mobile apps)
-        callback(null, true);
+        callback(null, true); // Allow the request
       } else {
-        callback(new Error("Not allowed by CORS"));
+        callback(new Error("Not allowed by CORS")); // Block the request
       }
     },
   })
 );
+
+// Handle CORS errors gracefully
+app.use((err, req, res, next) => {
+  if (err.message === "Not allowed by CORS") {
+    res.status(403).json({ message: "CORS policy blocked this request." });
+  } else {
+    next(err);
+  }
+});
 
 // Set up transporter for sending emails
 const transporter = nodemailer.createTransport({
@@ -101,7 +114,6 @@ app.post("/send-email", upload.fields([{ name: "csvFile" }, { name: "contentFile
         const trackingPixel = `<img src="https://mass-email-sender-backend.onrender.com/track/${trackingId}" width="1" height="1" style="display:none;" />`;
         const trackedLink = `https://mass-email-sender-backend.onrender.com/click/${trackingId}`;
         const unsubscribeLink = `<p>If you wish to unsubscribe, click <a href="https://mass-email-sender-backend.onrender.com/unsubscribe/${encodeURIComponent(recipient.email)}">here</a>.</p>`;
-
 
         const finalHtml = `${personalizedContent}<p>Click <a href="${trackedLink}">here</a> to visit the link.</p>${trackingPixel}${unsubscribeLink}`;
 
