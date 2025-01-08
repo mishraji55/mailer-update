@@ -33,13 +33,14 @@ const EmailSender = () => {
     }
   };
 
-  // Auto-refresh campaign data every 5 seconds
+  // Auto-refresh campaign data every 1 second
   useEffect(() => {
     const interval = setInterval(() => {
       if (selectedCampaign) {
-        fetchCampaignDetails(selectedCampaign.campaignId);
+        fetchCampaignDetails(selectedCampaign.campaignId); // Refresh selected campaign data
       }
-    }, 5000); // Refresh every 5 seconds
+      fetchTrackingReports(); // Refresh the list of campaigns
+    }, 1000); // Refresh every 1 second
 
     return () => clearInterval(interval); // Cleanup interval on unmount
   }, [selectedCampaign]);
