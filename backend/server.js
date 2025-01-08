@@ -17,6 +17,10 @@ const app = express();
 const cors = require("cors");
 const upload = multer({ dest: "uploads/" });
 
+// Define frontend and backend URLs
+const FRONTEND_URL = "https://mailer1-d1qw.onrender.com";
+const BACKEND_URL = "https://mailer-backend-7ay3.onrender.com";
+
 app.use(express.json());
 app.use(cors());
 
@@ -76,7 +80,7 @@ passport.use(
     {
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: "https://mailer-backend-7ay3.onrender.com/auth/google/callback",
+      callbackURL: `${BACKEND_URL}/auth/google/callback`,
     },
     async (accessToken, refreshToken, profile, done) => {
       try {
@@ -124,7 +128,7 @@ app.get(
   passport.authenticate("google", { failureRedirect: "/login" }),
   (req, res) => {
     // Redirect to the frontend dashboard after successful login
-    res.redirect("https://mailer1-d1qw.onrender.com/dashboard");
+    res.redirect(`${FRONTEND_URL}/dashboard`);
   }
 );
 
@@ -210,9 +214,9 @@ app.post("/send-email", isAuthenticated, upload.fields([{ name: "csvFile" }, { n
         const recipientData = newCampaign.recipients.find((r) => r.email === recipient.email);
         const trackingId = recipientData.trackingId;
 
-        const trackingPixel = `<img src="https://mailer-backend-7ay3.onrender.com/track/${trackingId}" width="1" height="1" style="display:none;" />`;
-        const trackedLink = `https://mailer-backend-7ay3.onrender.com/click/${trackingId}`;
-        const unsubscribeLink = `<p>If you wish to unsubscribe, click <a href="https://mailer-backend-7ay3.onrender.com/unsubscribe/${encodeURIComponent(
+        const trackingPixel = `<img src="${BACKEND_URL}/track/${trackingId}" width="1" height="1" style="display:none;" />`;
+        const trackedLink = `${BACKEND_URL}/click/${trackingId}`;
+        const unsubscribeLink = `<p>If you wish to unsubscribe, click <a href="${BACKEND_URL}/unsubscribe/${encodeURIComponent(
           recipient.email
         )}">here</a>.</p>`;
 
@@ -295,7 +299,7 @@ app.get("/click/:trackingId", async (req, res) => {
     }
   }
 
-  res.redirect("https://mailer1-d1qw.onrender.com");
+  res.redirect(FRONTEND_URL);
 });
 
 // Fetch tracking reports
