@@ -8,155 +8,61 @@ const emailValidator = require("email-validator");
 const { v4: uuidv4 } = require("uuid");
 const schedule = require("node-schedule");
 const mongoose = require("mongoose");
-const passport = require("passport");
-const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const jwt = require("jsonwebtoken");
-const cors = require("cors");
 require("dotenv").config(); // Load environment variables
 
 const app = express();
+const cors = require("cors");
 const upload = multer({ dest: "uploads/" });
 
-// Define frontend and backend URLs
-const FRONTEND_URL = process.env.FRONTEND_URL || "https://mailer1-d1qw.onrender.com";
-const BACKEND_URL = process.env.BACKEND_URL || "https://mailer-backend-7ay3.onrender.com";
-
-// Middleware
 app.use(express.json());
-app.use(cors({ origin: FRONTEND_URL })); // Allow CORS for the frontend
+app.use(cors());
 
-// Debugging: Log environment variables
+// Debugging: Log the MongoDB connection string
 console.log("MONGODB_URI:", process.env.MONGODB_URI);
-console.log("GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID);
-console.log("GOOGLE_CLIENT_SECRET:", process.env.GOOGLE_CLIENT_SECRET);
-console.log("BACKEND_URL:", BACKEND_URL);
-console.log("FRONTEND_URL:", FRONTEND_URL);
 
 // Connect to MongoDB
-mongoose
-  .connect(process.env.MONGODB_URI)
+mongoose.connect(process.env.MONGODB_URI)
   .then(() => console.log("Connected to MongoDB"))
   .catch((err) => {
     console.error("Failed to connect to MongoDB:", err.message);
     process.exit(1); // Exit the application if MongoDB connection fails
   });
 
-// Define User Schema
-const userSchema = new mongoose.Schema({
-  email: { type: String, required: true, unique: true },
-  emailService: { type: String, required: true }, // e.g., "gmail"
-  accessToken: { type: String, required: true },
-  refreshToken: { type: String },
-});
-
-const User = mongoose.model("User", userSchema);
-
 // Define Campaign Schema
 const campaignSchema = new mongoose.Schema({
-  userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true }, // Link to user
   subject: String,
-  recipients: [
-    {
-      email: String,
-      status: { type: String, default: "Not Sent" },
-      opened: { type: Boolean, default: false },
-      linkVisited: { type: Boolean, default: false },
-      trackingId: String,
-    },
-  ],
+  recipients: [{
+    email: String,
+    status: { type: String, default: "Not Sent" },
+    opened: { type: Boolean, default: false },
+    linkVisited: { type: Boolean, default: false },
+    trackingId: String,
+  }],
 });
 
 const Campaign = mongoose.model("Campaign", campaignSchema);
 
-// Passport Google OAuth2 Configuration
-passport.use(
-  new GoogleStrategy(
-    {
-      clientID: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      callbackURL: `${BACKEND_URL}/auth/google/callback`,
-    },
-    async (accessToken, refreshToken, profile, done) => {
-      try {
-        console.log("Google OAuth2 profile received:", profile);
-        console.log("Access Token:", accessToken);
-        console.log("Refresh Token:", refreshToken);
-
-        // Save or update user in the database
-        const user = await User.findOneAndUpdate(
-          { email: profile.emails[0].value },
-          {
-            email: profile.emails[0].value,
-            emailService: "gmail",
-            accessToken,
-            refreshToken,
-          },
-          { upsert: true, new: true }
-        );
-        done(null, user);
-      } catch (err) {
-        console.error("Error in Google OAuth2 strategy:", err);
-        done(err, null);
-      }
-    }
-  )
-);
-
-// Google OAuth2 login route
-app.get(
-  "/auth/google",
-  (req, res, next) => {
-    console.log("Google OAuth2 authentication initiated");
-    passport.authenticate("google", {
-      scope: ["profile", "email", "https://www.googleapis.com/auth/gmail.send"],
-    })(req, res, next);
-  }
-);
-
-// Google OAuth2 callback route
-app.get(
-  "/auth/google/callback",
-  passport.authenticate("google", { failureRedirect: `${FRONTEND_URL}/login`, session: false }), // Disable sessions
-  (req, res) => {
-    console.log("Google OAuth2 callback triggered. User:", req.user);
-
-    // Generate a JWT
-    const token = jwt.sign(
-      { id: req.user._id, email: req.user.email }, // Payload
-      process.env.JWT_SECRET, // Secret key
-      { expiresIn: "1h" } // Token expiration
-    );
-
-    // Redirect to the frontend with the token
-    res.redirect(`${FRONTEND_URL}?token=${token}`);
-  }
-);
-
-// Middleware to check if the user is authenticated
-const authenticateJWT = (req, res, next) => {
-  const token = req.headers["authorization"];
-  if (!token) {
-    return res.status(401).send({ message: "Unauthorized" });
-  }
-
-  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
-    if (err) {
-      console.error("JWT verification error:", err);
-      return res.status(403).send({ message: "Invalid token" });
-    }
-    req.user = user; // Attach the user to the request object
-    next();
-  });
-};
-
-// Fetch the logged-in user's details
-app.get("/auth/user", authenticateJWT, (req, res) => {
-  console.log("Fetching user data for:", req.user.email);
-  res.json({ user: req.user });
+// Set up transporter for sending emails
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
 });
 
+// Helper function to replace tags with recipient data
+const replacePersonalizationTags = (content, recipientData) => {
+  let personalizedContent = content;
+  Object.keys(recipientData).forEach((key) => {
+    const tag = `{{${key}}}`;
+    personalizedContent = personalizedContent.replace(new RegExp(tag, "g"), recipientData[key]);
+  });
+  return personalizedContent;
+};
+
 // Handle sending emails
-app.post("/send-email", authenticateJWT, upload.fields([{ name: "csvFile" }, { name: "contentFile" }]), async (req, res) => {
+app.post("/send-email", upload.fields([{ name: "csvFile" }, { name: "contentFile" }]), async (req, res) => {
   const { subject, manualText, isScheduled, sendAt } = req.body;
 
   if (!req.files || !req.files.csvFile) {
@@ -195,7 +101,6 @@ app.post("/send-email", authenticateJWT, upload.fields([{ name: "csvFile" }, { n
 
       // Create a new campaign in MongoDB
       const newCampaign = new Campaign({
-        userId: req.user.id, // Link campaign to the logged-in user
         subject,
         recipients: uniqueRecipients.map((recipient) => ({
           email: recipient.email,
@@ -211,35 +116,21 @@ app.post("/send-email", authenticateJWT, upload.fields([{ name: "csvFile" }, { n
         emailContent = fs.readFileSync(path.join(__dirname, contentFile.path), "utf-8");
       }
 
-      // Use the user's access token to send emails
-      const user = await User.findById(req.user.id);
-      const transporter = nodemailer.createTransport({
-        service: "gmail",
-        auth: {
-          type: "OAuth2",
-          user: user.email, // User's email
-          accessToken: user.accessToken, // User's access token
-          clientId: process.env.GOOGLE_CLIENT_ID,
-          clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-          refreshToken: user.refreshToken,
-        },
-      });
-
       for (const recipient of uniqueRecipients) {
         const personalizedContent = replacePersonalizationTags(emailContent, recipient);
         const recipientData = newCampaign.recipients.find((r) => r.email === recipient.email);
         const trackingId = recipientData.trackingId;
 
-        const trackingPixel = `<img src="${BACKEND_URL}/track/${trackingId}" width="1" height="1" style="display:none;" />`;
-        const trackedLink = `${BACKEND_URL}/click/${trackingId}`;
-        const unsubscribeLink = `<p>If you wish to unsubscribe, click <a href="${BACKEND_URL}/unsubscribe/${encodeURIComponent(
+        const trackingPixel = `<img src="https://mailer-backend-7ay3.onrender.com/track/${trackingId}" width="1" height="1" style="display:none;" />`;
+        const trackedLink = `https://mailer-backend-7ay3.onrender.com/click/${trackingId}`;
+        const unsubscribeLink = `<p>If you wish to unsubscribe, click <a href="https://mailer-backend-7ay3.onrender.com/unsubscribe/${encodeURIComponent(
           recipient.email
         )}">here</a>.</p>`;
 
         const finalHtml = `${personalizedContent}<p>Click <a href="${trackedLink}">here</a> to visit the link.</p>${trackingPixel}${unsubscribeLink}`;
 
         const mailOptions = {
-          from: user.email, // Use the user's email as the sender
+          from: process.env.EMAIL_USER,
           to: recipient.email,
           subject,
           text: personalizedContent, // Plain text fallback
@@ -297,7 +188,7 @@ app.get("/track/:trackingId", async (req, res) => {
     }
   }
 
-  res.sendFile(path.join(__dirname, "tracking-pixel.png"));
+  res.sendFile(path.join(__dirname, "tracking-pixels.png"));
 });
 
 // Handle click tracking
@@ -315,13 +206,13 @@ app.get("/click/:trackingId", async (req, res) => {
     }
   }
 
-  res.redirect(FRONTEND_URL);
+  res.redirect("https://mailer1-d1qw.onrender.com");
 });
 
 // Fetch tracking reports
-app.get("/tracking-reports", authenticateJWT, async (req, res) => {
+app.get("/tracking-reports", async (req, res) => {
   try {
-    const campaigns = await Campaign.find({ userId: req.user.id }); // Fetch campaigns for the logged-in user
+    const campaigns = await Campaign.find({});
 
     // Calculate CTR and OTR for each campaign
     const trackingReports = campaigns.map((campaign) => {
@@ -348,7 +239,7 @@ app.get("/tracking-reports", authenticateJWT, async (req, res) => {
 });
 
 // Fetch campaign details
-app.get("/campaign-details/:campaignId", authenticateJWT, async (req, res) => {
+app.get("/campaign-details/:campaignId", async (req, res) => {
   const campaignId = req.params.campaignId;
 
   // Validate campaignId
@@ -357,7 +248,7 @@ app.get("/campaign-details/:campaignId", authenticateJWT, async (req, res) => {
   }
 
   try {
-    const campaign = await Campaign.findOne({ _id: campaignId, userId: req.user.id }); // Ensure the campaign belongs to the logged-in user
+    const campaign = await Campaign.findById(campaignId);
     if (!campaign) {
       return res.status(404).send({ message: "Campaign not found." });
     }
