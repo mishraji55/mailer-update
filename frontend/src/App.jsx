@@ -33,18 +33,6 @@ const EmailSender = () => {
     }
   };
 
-  // Auto-refresh campaign data every 1 second
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (selectedCampaign) {
-        fetchCampaignDetails(selectedCampaign.campaignId); // Refresh selected campaign data
-      }
-      fetchTrackingReports(); // Refresh the list of campaigns
-    }, 1000); // Refresh every 1 second
-
-    return () => clearInterval(interval); // Cleanup interval on unmount
-  }, [selectedCampaign]);
-
   // Fetch tracking reports when the component mounts
   useEffect(() => {
     fetchTrackingReports();
@@ -111,7 +99,7 @@ const EmailSender = () => {
               onClick={fetchTrackingReports}
               style={{ width: "100%", padding: "10px", backgroundColor: "#4CAF50", color: "white", border: "none", cursor: "pointer" }}
             >
-              Tracking Reports
+              Refresh Reports
             </button>
           </li>
         </ul>
