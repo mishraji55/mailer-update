@@ -22,7 +22,7 @@ const EmailSender = () => {
     try {
       console.log("Fetching user data...");
       const response = await fetch(`${BACKEND_URL}/auth/user`, {
-        credentials: "include", // Include cookies for session-based authentication
+        credentials: "include", // Include cookies
       });
       const data = await response.json();
       console.log("User data received:", data);
@@ -39,10 +39,12 @@ const EmailSender = () => {
   // Fetch tracking reports from the backend
   const fetchTrackingReports = async () => {
     try {
+      console.log("Fetching tracking reports...");
       const response = await fetch(`${BACKEND_URL}/tracking-reports`, {
-        credentials: "include",
+        credentials: "include", // Include cookies
       });
       const data = await response.json();
+      console.log("Tracking reports received:", data);
       setTrackingReports(data.trackingReports);
     } catch (error) {
       console.error("Error fetching tracking reports:", error);
@@ -52,10 +54,12 @@ const EmailSender = () => {
   // Fetch campaign details
   const fetchCampaignDetails = async (campaignId) => {
     try {
+      console.log("Fetching campaign details...");
       const response = await fetch(`${BACKEND_URL}/campaign-details/${campaignId}`, {
-        credentials: "include",
+        credentials: "include", // Include cookies
       });
       const data = await response.json();
+      console.log("Campaign details received:", data);
       setSelectedCampaign(data);
     } catch (error) {
       console.error("Error fetching campaign details:", error);
@@ -113,7 +117,7 @@ const EmailSender = () => {
     try {
       const response = await fetch(`${BACKEND_URL}/send-email`, {
         method: "POST",
-        credentials: "include",
+        credentials: "include", // Include cookies
         body: formData,
       });
 
