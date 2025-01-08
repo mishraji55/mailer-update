@@ -20,10 +20,12 @@ const EmailSender = () => {
   // Fetch the logged-in user's details
   const fetchUser = async () => {
     try {
+      console.log("Fetching user data...");
       const response = await fetch(`${BACKEND_URL}/auth/user`, {
         credentials: "include", // Include cookies for session-based authentication
       });
       const data = await response.json();
+      console.log("User data received:", data);
       if (response.ok) {
         setUser(data.user); // Set the user state
       } else {
