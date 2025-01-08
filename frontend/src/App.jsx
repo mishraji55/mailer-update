@@ -27,7 +27,7 @@ const EmailSender = () => {
   // Fetch tracking reports from the backend
   const fetchTrackingReports = async () => {
     try {
-      const response = await fetch(`${process.env.BACKEND_URL}/tracking-reports`);
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/tracking-reports`);
       const data = await response.json();
       setTrackingReports(data.trackingReports);
     } catch (error) {
@@ -38,7 +38,7 @@ const EmailSender = () => {
   // Fetch campaign details
   const fetchCampaignDetails = async (campaignId) => {
     try {
-      const response = await fetch(`${process.env.BACKEND_URL}/campaign-details/${campaignId}`);
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/campaign-details/${campaignId}`);
       const data = await response.json();
       setSelectedCampaign(data);
     } catch (error) {
@@ -65,7 +65,7 @@ const EmailSender = () => {
 
   // Handle Google OAuth2 login
   const handleGoogleLogin = () => {
-    window.location.href = `${process.env.BACKEND_URL}/auth/google`;
+    window.location.href = `${process.env.REACT_APP_BACKEND_URL}/auth/google`;
   };
 
   // Handle sending emails
@@ -94,7 +94,7 @@ const EmailSender = () => {
     if (isScheduled) formData.append("sendAt", scheduleDate);
 
     try {
-      const response = await fetch(`${process.env.BACKEND_URL}/send-email`, {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/send-email`, {
         method: "POST",
         body: formData,
       });
