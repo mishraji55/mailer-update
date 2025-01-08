@@ -116,10 +116,12 @@ passport.deserializeUser(async (id, done) => {
 
 // Google OAuth2 login route
 app.get(
-  "/auth/google",
-  passport.authenticate("google", {
-    scope: ["profile", "email", "https://www.googleapis.com/auth/gmail.send"],
-  })
+  "/auth/google/callback",
+  passport.authenticate("google", { failureRedirect: "/login" }),
+  (req, res) => {
+    // Return user data as JSON
+    res.json({ user: req.user });
+  }
 );
 
 // Google OAuth2 callback route
