@@ -1,9 +1,5 @@
 import React, { useState, useEffect } from "react";
 
-// Define frontend and backend URLs
-const FRONTEND_URL = "https://mailer1-d1qw.onrender.com";
-const BACKEND_URL = "https://mailer-backend-7ay3.onrender.com";
-
 const EmailSender = () => {
   const [csvFile, setCsvFile] = useState(null);
   const [contentFile, setContentFile] = useState(null);
@@ -14,58 +10,13 @@ const EmailSender = () => {
   const [status, setStatus] = useState("");
   const [trackingReports, setTrackingReports] = useState([]);
   const [selectedCampaign, setSelectedCampaign] = useState(null);
-  const [showTrackingReports, setShowTrackingReports] = useState(false);
-  const [user, setUser] = useState(null); // Track logged-in user
-  const [token, setToken] = useState(localStorage.getItem("jwt")); // Store JWT
-
-  // Fetch the logged-in user's details
-  const fetchUser = async () => {
-    try {
-      console.log("Fetching user data...");
-      const response = await fetch(`${BACKEND_URL}/auth/user`, {
-        headers: {
-          Authorization: `Bearer ${token}`, // Include JWT
-        },
-      });
-
-      if (response.status === 403) {
-        // Token is invalid or expired
-        localStorage.removeItem("jwt"); // Clear the token
-        window.location.href = "/login"; // Redirect to login
-        return;
-      }
-
-      const data = await response.json();
-      console.log("User data received:", data);
-      if (response.ok) {
-        setUser(data.user); // Set the user state
-      } else {
-        setUser(null); // No user is logged in
-      }
-    } catch (error) {
-      console.error("Error fetching user:", error);
-    }
-  };
+  const [showTrackingReports, setShowTrackingReports] = useState(false); // New state for tracking reports page
 
   // Fetch tracking reports from the backend
   const fetchTrackingReports = async () => {
     try {
-      console.log("Fetching tracking reports...");
-      const response = await fetch(`${BACKEND_URL}/tracking-reports`, {
-        headers: {
-          Authorization: `Bearer ${token}`, // Include JWT
-        },
-      });
-
-      if (response.status === 403) {
-        // Token is invalid or expired
-        localStorage.removeItem("jwt"); // Clear the token
-        window.location.href = "/login"; // Redirect to login
-        return;
-      }
-
+      const response = await fetch("https://mailer-backend-7ay3.onrender.com/tracking-reports");
       const data = await response.json();
-      console.log("Tracking reports received:", data);
       setTrackingReports(data.trackingReports);
     } catch (error) {
       console.error("Error fetching tracking reports:", error);
@@ -75,22 +26,8 @@ const EmailSender = () => {
   // Fetch campaign details
   const fetchCampaignDetails = async (campaignId) => {
     try {
-      console.log("Fetching campaign details...");
-      const response = await fetch(`${BACKEND_URL}/campaign-details/${campaignId}`, {
-        headers: {
-          Authorization: `Bearer ${token}`, // Include JWT
-        },
-      });
-
-      if (response.status === 403) {
-        // Token is invalid or expired
-        localStorage.removeItem("jwt"); // Clear the token
-        window.location.href = "/login"; // Redirect to login
-        return;
-      }
-
+      const response = await fetch(`https://mailer-backend-7ay3.onrender.com/campaign-details/${campaignId}`);
       const data = await response.json();
-      console.log("Campaign details received:", data);
       setSelectedCampaign(data);
     } catch (error) {
       console.error("Error fetching campaign details:", error);
@@ -109,20 +46,11 @@ const EmailSender = () => {
     return () => clearInterval(interval); // Cleanup interval on unmount
   }, [selectedCampaign]);
 
-  // Fetch tracking reports and user when the component mounts
+  // Fetch tracking reports when the component mounts
   useEffect(() => {
-    if (token) {
-      fetchTrackingReports();
-      fetchUser(); // Fetch the logged-in user
-    }
-  }, [token]);
+    fetchTrackingReports();
+  }, []);
 
-  // Handle Google OAuth2 login
-  const handleGoogleLogin = () => {
-    window.location.href = `${BACKEND_URL}/auth/google`;
-  };
-
-  // Handle sending emails
   const handleSendEmail = async () => {
     if (!csvFile) {
       setStatus("Please upload a CSV file with recipients.");
@@ -148,11 +76,8 @@ const EmailSender = () => {
     if (isScheduled) formData.append("sendAt", scheduleDate);
 
     try {
-      const response = await fetch(`${BACKEND_URL}/send-email`, {
+      const response = await fetch("https://mailer-backend-7ay3.onrender.com/send-email", {
         method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`, // Include JWT
-        },
         body: formData,
       });
 
@@ -168,29 +93,6 @@ const EmailSender = () => {
     }
   };
 
-  // If the user is not logged in, show the login button
-  if (!user) {
-    return (
-      <div style={{ textAlign: "center", marginTop: "50px" }}>
-        <h1>Welcome to Email Sender</h1>
-        <p>Please log in with Google to start sending emails.</p>
-        <button
-          onClick={handleGoogleLogin}
-          style={{
-            padding: "10px 20px",
-            backgroundColor: "#4285F4",
-            color: "white",
-            border: "none",
-            cursor: "pointer",
-          }}
-        >
-          Login with Google
-        </button>
-      </div>
-    );
-  }
-
-  // If the user is logged in, show the email features
   return (
     <div style={{ display: "flex" }}>
       {/* Sidebar */}
