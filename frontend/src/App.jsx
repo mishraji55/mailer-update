@@ -16,13 +16,16 @@ const EmailSender = () => {
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [showTrackingReports, setShowTrackingReports] = useState(false);
   const [user, setUser] = useState(null); // Track logged-in user
+  const [token, setToken] = useState(localStorage.getItem("jwt")); // Store JWT
 
   // Fetch the logged-in user's details
   const fetchUser = async () => {
     try {
       console.log("Fetching user data...");
       const response = await fetch(`${BACKEND_URL}/auth/user`, {
-        credentials: "include", // Include cookies
+        headers: {
+          Authorization: `Bearer ${token}`, // Include JWT
+        },
       });
       const data = await response.json();
       console.log("User data received:", data);
@@ -41,7 +44,9 @@ const EmailSender = () => {
     try {
       console.log("Fetching tracking reports...");
       const response = await fetch(`${BACKEND_URL}/tracking-reports`, {
-        credentials: "include", // Include cookies
+        headers: {
+          Authorization: `Bearer ${token}`, // Include JWT
+        },
       });
       const data = await response.json();
       console.log("Tracking reports received:", data);
@@ -56,7 +61,9 @@ const EmailSender = () => {
     try {
       console.log("Fetching campaign details...");
       const response = await fetch(`${BACKEND_URL}/campaign-details/${campaignId}`, {
-        credentials: "include", // Include cookies
+        headers: {
+          Authorization: `Bearer ${token}`, // Include JWT
+        },
       });
       const data = await response.json();
       console.log("Campaign details received:", data);
@@ -80,9 +87,11 @@ const EmailSender = () => {
 
   // Fetch tracking reports and user when the component mounts
   useEffect(() => {
-    fetchTrackingReports();
-    fetchUser(); // Fetch the logged-in user
-  }, []);
+    if (token) {
+      fetchTrackingReports();
+      fetchUser(); // Fetch the logged-in user
+    }
+  }, [token]);
 
   // Handle Google OAuth2 login
   const handleGoogleLogin = () => {
@@ -117,7 +126,9 @@ const EmailSender = () => {
     try {
       const response = await fetch(`${BACKEND_URL}/send-email`, {
         method: "POST",
-        credentials: "include", // Include cookies
+        headers: {
+          Authorization: `Bearer ${token}`, // Include JWT
+        },
         body: formData,
       });
 
