@@ -3,7 +3,20 @@ const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
 const session = require("express-session");
 const MongoStore = require("connect-mongo"); // For production session storage
-require("dotenv").config();
+const mongoose = require("mongoose"); // For MongoDB connection
+const dotenv = require("dotenv"); // For environment variables
+const cors = require("cors"); // For enabling CORS
+const multer = require("multer"); // For file uploads
+const csvParser = require("csv-parser"); // For parsing CSV files
+const fs = require("fs"); // For file system operations
+const path = require("path"); // For file paths
+const { v4: uuidv4 } = require("uuid"); // For generating unique IDs
+const schedule = require("node-schedule"); // For scheduling emails
+const nodemailer = require("nodemailer"); // For sending emails
+const emailValidator = require("email-validator"); // For validating email addresses
+
+// Load environment variables
+dotenv.config();
 
 // Validate environment variables
 if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || !process.env.MONGODB_URI) {
@@ -12,6 +25,9 @@ if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET || !proce
 }
 
 const app = express();
+
+// Enable CORS
+app.use(cors());
 
 // Session setup with MongoDB store (for production)
 app.use(
@@ -29,6 +45,15 @@ app.use(
 // Initialize Passport
 app.use(passport.initialize());
 app.use(passport.session());
+
+// Connect to MongoDB
+mongoose
+  .connect(process.env.MONGODB_URI)
+  .then(() => console.log("Connected to MongoDB"))
+  .catch((err) => {
+    console.error("Failed to connect to MongoDB:", err.message);
+    process.exit(1); // Exit the application if MongoDB connection fails
+  });
 
 // Register Google OAuth strategy
 passport.use(
