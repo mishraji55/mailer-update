@@ -34,15 +34,98 @@ const EmailSender = () => {
     }
   };
 
+  // Fetch tracking reports from the backend
+  const fetchTrackingReports = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/tracking-reports`, {
+        credentials: "include",
+      });
+      const data = await response.json();
+      setTrackingReports(data.trackingReports);
+    } catch (error) {
+      console.error("Error fetching tracking reports:", error);
+    }
+  };
+
+  // Fetch campaign details
+  const fetchCampaignDetails = async (campaignId) => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/campaign-details/${campaignId}`, {
+        credentials: "include",
+      });
+      const data = await response.json();
+      setSelectedCampaign(data);
+    } catch (error) {
+      console.error("Error fetching campaign details:", error);
+    }
+  };
+
+  // Auto-refresh campaign data every 1 second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (selectedCampaign) {
+        fetchCampaignDetails(selectedCampaign._id); // Refresh selected campaign data
+      }
+      fetchTrackingReports(); // Refresh the list of campaigns
+    }, 1000); // Refresh every 1 second
+
+    return () => clearInterval(interval); // Cleanup interval on unmount
+  }, [selectedCampaign]);
+
+  // Fetch tracking reports and user when the component mounts
+  useEffect(() => {
+    fetchTrackingReports();
+    fetchUser(); // Fetch the logged-in user
+  }, []);
+
   // Handle Google OAuth2 login
   const handleGoogleLogin = () => {
     window.location.href = `${BACKEND_URL}/auth/google`;
   };
 
-  // Check if the user is logged in when the component mounts
-  useEffect(() => {
-    fetchUser();
-  }, []);
+  // Handle sending emails
+  const handleSendEmail = async () => {
+    if (!csvFile) {
+      setStatus("Please upload a CSV file with recipients.");
+      return;
+    }
+
+    if (!manualText && !contentFile) {
+      setStatus("Please provide content: enter text or upload an HTML/Markdown file.");
+      return;
+    }
+
+    if (manualText && contentFile) {
+      setStatus("You can only use one content option: text or HTML/Markdown file.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("csvFile", csvFile);
+    formData.append("contentFile", contentFile);
+    formData.append("manualText", manualText);
+    formData.append("subject", subject);
+    formData.append("isScheduled", isScheduled);
+    if (isScheduled) formData.append("sendAt", scheduleDate);
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/send-email`, {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+
+      const data = await response.json();
+      if (response.ok) {
+        setStatus(data.message || "Emails sent successfully!");
+        fetchCampaignDetails(data.campaignId); // Use the correct campaignId
+      } else {
+        setStatus(data.message || "Error sending email");
+      }
+    } catch (error) {
+      setStatus("An error occurred while sending the email.");
+    }
+  };
 
   // If the user is not logged in, show the login button
   if (!user) {
