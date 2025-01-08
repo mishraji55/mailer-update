@@ -223,7 +223,7 @@ const EmailSender = () => {
               />
             </div>
 
-            {/* Schedule Email Option */}
+            {/* Schedule Email Option */} // This is the checkbox for scheduling emails 
             <div style={{ marginBottom: "20px", display: "flex", alignItems: "center" }}>
               <label htmlFor="scheduleEmail" style={{ fontWeight: "bold" }}>
                 Schedule Email:
