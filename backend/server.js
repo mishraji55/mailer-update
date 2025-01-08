@@ -123,10 +123,18 @@ app.get(
   "/auth/google/callback",
   passport.authenticate("google", { failureRedirect: "/login" }),
   (req, res) => {
-    // Redirect to the frontend dashboard after successful login
-    res.redirect("https://mailer1-d1qw.onrender.com/dashboard");
+    // Redirect to the frontend root URL after successful login
+    res.redirect("https://mailer1-d1qw.onrender.com/");
   }
 );
+
+// Fetch the logged-in user's details
+app.get("/auth/user", (req, res) => {
+  if (req.isAuthenticated()) {
+    return res.status(200).json({ user: req.user });
+  }
+  res.status(401).json({ message: "Not authenticated" });
+});
 
 // Middleware to check if the user is authenticated
 const isAuthenticated = (req, res, next) => {
