@@ -211,8 +211,31 @@ app.get("/click/:trackingId", async (req, res) => {
 
 // Fetch tracking reports
 app.get("/tracking-reports", async (req, res) => {
-  const trackingReports = await Campaign.find({}, { subject: 1, _id: 1 });
-  res.status(200).json({ trackingReports });
+  try {
+    const campaigns = await Campaign.find({});
+
+    // Calculate CTR and OTR for each campaign
+    const trackingReports = campaigns.map((campaign) => {
+      const totalEmailsSent = campaign.recipients.length;
+      const totalOpened = campaign.recipients.filter((r) => r.opened).length;
+      const totalClicks = campaign.recipients.filter((r) => r.linkVisited).length;
+
+      const ctr = totalEmailsSent > 0 ? ((totalClicks / totalEmailsSent) * 100).toFixed(2) : 0;
+      const otr = totalEmailsSent > 0 ? ((totalOpened / totalEmailsSent) * 100).toFixed(2) : 0;
+
+      return {
+        _id: campaign._id,
+        subject: campaign.subject,
+        ctr: parseFloat(ctr), // Convert string to number
+        otr: parseFloat(otr), // Convert string to number
+      };
+    });
+
+    res.status(200).json({ trackingReports });
+  } catch (error) {
+    console.error("Error fetching tracking reports:", error);
+    res.status(500).send({ message: "An error occurred while fetching tracking reports." });
+  }
 });
 
 // Fetch campaign details
