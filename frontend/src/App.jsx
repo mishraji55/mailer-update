@@ -5,6 +5,7 @@ import CampaignForm from "./components/CampaignForm";
 import TrackingReports from "./components/TrackingReports";
 import CampaignDetails from "./components/CampaignDetails";
 import CampaignList from "./components/CampaignList";
+import "./styles.css";
 
 
 const App = () => {
