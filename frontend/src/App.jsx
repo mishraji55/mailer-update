@@ -9,7 +9,7 @@ const EmailSender = () => {
   const [scheduleDate, setScheduleDate] = useState("");
   const [status, setStatus] = useState("");
   const [trackingReports, setTrackingReports] = useState([]);
-  const [selectedCampaign, setSelectedCampaign] = useState({ recipients: [] }); // Initialize with default structure
+  const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [showTrackingReports, setShowTrackingReports] = useState(false);
 
   // Fetch tracking reports from the backend
@@ -17,10 +17,10 @@ const EmailSender = () => {
     try {
       const response = await fetch("https://mailer-backend-7ay3.onrender.com/tracking-reports");
       const data = await response.json();
-      setTrackingReports(data.trackingReports || []); // Ensure it's an array
+      setTrackingReports(data.trackingReports || []);
     } catch (error) {
       console.error("Error fetching tracking reports:", error);
-      setTrackingReports([]); // Reset to avoid undefined errors
+      setTrackingReports([]);
     }
   };
 
@@ -29,10 +29,10 @@ const EmailSender = () => {
     try {
       const response = await fetch(`https://mailer-backend-7ay3.onrender.com/campaign-details/${campaignId}`);
       const data = await response.json();
-      setSelectedCampaign(data || { recipients: [] }); // Ensure it has a valid structure
+      setSelectedCampaign(data || { recipients: [] });
     } catch (error) {
       console.error("Error fetching campaign details:", error);
-      setSelectedCampaign({ recipients: [] }); // Reset to avoid undefined errors
+      setSelectedCampaign({ recipients: [] });
     }
   };
 
@@ -40,12 +40,12 @@ const EmailSender = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       if (selectedCampaign && selectedCampaign._id) {
-        fetchCampaignDetails(selectedCampaign._id); // Refresh selected campaign data
+        fetchCampaignDetails(selectedCampaign._id);
       }
-      fetchTrackingReports(); // Refresh the list of campaigns
-    }, 1000); // Refresh every 1 second
+      fetchTrackingReports();
+    }, 1000);
 
-    return () => clearInterval(interval); // Cleanup interval on unmount
+    return () => clearInterval(interval);
   }, [selectedCampaign]);
 
   // Fetch tracking reports when the component mounts
@@ -76,11 +76,16 @@ const EmailSender = () => {
 
     const formData = new FormData();
     formData.append("csvFile", csvFile);
-    formData.append("contentFile", contentFile);
+    if (contentFile) formData.append("contentFile", contentFile);
     formData.append("manualText", manualText);
     formData.append("subject", subject);
     formData.append("isScheduled", isScheduled);
     if (isScheduled) formData.append("sendAt", scheduleDate);
+
+    // Debugging: Log form data
+    for (let [key, value] of formData.entries()) {
+      console.log(key, value);
+    }
 
     try {
       const response = await fetch("https://mailer-backend-7ay3.onrender.com/send-email", {
@@ -91,7 +96,7 @@ const EmailSender = () => {
       const data = await response.json();
       if (response.ok) {
         setStatus(data.message || "Emails sent successfully!");
-        fetchCampaignDetails(data.campaignId); // Use the correct campaignId
+        fetchCampaignDetails(data.campaignId);
       } else {
         setStatus(data.message || "Error sending email");
       }
@@ -109,8 +114,15 @@ const EmailSender = () => {
           <li style={{ marginBottom: "10px" }}>
             <button
               onClick={() => {
-                setSelectedCampaign({ recipients: [] });
-                setShowTrackingReports(false); // Reset tracking reports page
+                setSelectedCampaign(null);
+                setShowTrackingReports(false);
+                setCsvFile(null);
+                setContentFile(null);
+                setManualText("");
+                setSubject("");
+                setIsScheduled(false);
+                setScheduleDate("");
+                setStatus("");
               }}
               style={{ width: "100%", padding: "10px", backgroundColor: "#4CAF50", color: "white", border: "none", cursor: "pointer" }}
             >
@@ -120,8 +132,8 @@ const EmailSender = () => {
           <li style={{ marginBottom: "10px" }}>
             <button
               onClick={() => {
-                setShowTrackingReports(true); // Show tracking reports page
-                fetchTrackingReports(); // Fetch latest tracking reports
+                setShowTrackingReports(true);
+                fetchTrackingReports();
               }}
               style={{ width: "100%", padding: "10px", backgroundColor: "#4CAF50", color: "white", border: "none", cursor: "pointer" }}
             >
@@ -140,7 +152,7 @@ const EmailSender = () => {
                   <button
                     onClick={() => {
                       setSelectedCampaign(report);
-                      setShowTrackingReports(false); // Hide tracking reports page
+                      setShowTrackingReports(false);
                     }}
                     style={{ width: "100%", padding: "10px", backgroundColor: "#4CAF50", color: "white", border: "none", cursor: "pointer" }}
                   >
@@ -178,7 +190,7 @@ const EmailSender = () => {
               </tbody>
             </table>
           </div>
-        ) : selectedCampaign && selectedCampaign.recipients ? (
+        ) : selectedCampaign ? (
           // Campaign Details
           <div>
             <h2>{selectedCampaign.subject}</h2>
