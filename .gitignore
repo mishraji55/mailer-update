@@ -22,3 +22,4 @@ Thumbs.db
 # Backend specific logs
 /logs
 .env
+backend/.env
