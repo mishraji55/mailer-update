@@ -33,6 +33,18 @@ const EmailSender = () => {
     }
   };
 
+  // Auto-refresh campaign data every 1 second
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (selectedCampaign) {
+        fetchCampaignDetails(selectedCampaign._id); // Refresh selected campaign data
+      }
+      fetchTrackingReports(); // Refresh the list of campaigns
+    }, 1000); // Refresh every 1 second
+
+    return () => clearInterval(interval); // Cleanup interval on unmount
+  }, [selectedCampaign]);
+
   // Fetch tracking reports when the component mounts
   useEffect(() => {
     fetchTrackingReports();
@@ -71,7 +83,7 @@ const EmailSender = () => {
       const data = await response.json();
       if (response.ok) {
         setStatus(data.message || "Emails sent successfully!");
-        fetchTrackingReports(); // Refresh tracking reports
+        fetchCampaignDetails(data.campaignId); // Use the correct campaignId
       } else {
         setStatus(data.message || "Error sending email");
       }
@@ -99,7 +111,7 @@ const EmailSender = () => {
               onClick={fetchTrackingReports}
               style={{ width: "100%", padding: "10px", backgroundColor: "#4CAF50", color: "white", border: "none", cursor: "pointer" }}
             >
-              Refresh Reports
+              Tracking Reports
             </button>
           </li>
         </ul>
@@ -108,9 +120,9 @@ const EmailSender = () => {
         <h4>Campaigns</h4>
         <ul style={{ listStyle: "none", padding: 0 }}>
           {trackingReports.map((report) => (
-            <li key={report.campaignId} style={{ marginBottom: "10px" }}>
+            <li key={report._id} style={{ marginBottom: "10px" }}>
               <button
-                onClick={() => fetchCampaignDetails(report.campaignId)}
+                onClick={() => fetchCampaignDetails(report._id)}
                 style={{ width: "100%", padding: "10px", backgroundColor: "#4CAF50", color: "white", border: "none", cursor: "pointer" }}
               >
                 {report.subject}

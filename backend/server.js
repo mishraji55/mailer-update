@@ -218,11 +218,22 @@ app.get("/tracking-reports", async (req, res) => {
 // Fetch campaign details
 app.get("/campaign-details/:campaignId", async (req, res) => {
   const campaignId = req.params.campaignId;
-  const campaign = await Campaign.findById(campaignId);
-  if (!campaign) {
-    return res.status(404).send({ message: "Campaign not found." });
+
+  // Validate campaignId
+  if (!mongoose.Types.ObjectId.isValid(campaignId)) {
+    return res.status(400).send({ message: "Invalid campaign ID." });
   }
-  res.status(200).json(campaign);
+
+  try {
+    const campaign = await Campaign.findById(campaignId);
+    if (!campaign) {
+      return res.status(404).send({ message: "Campaign not found." });
+    }
+    res.status(200).json(campaign);
+  } catch (error) {
+    console.error("Error fetching campaign details:", error);
+    res.status(500).send({ message: "An error occurred while fetching campaign details." });
+  }
 });
 
 // Handle unsubscribe
