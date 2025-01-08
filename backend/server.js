@@ -10,7 +10,7 @@ const schedule = require("node-schedule");
 const mongoose = require("mongoose");
 const passport = require("passport");
 const GoogleStrategy = require("passport-google-oauth20").Strategy;
-const session = require("express-session");
+const jwt = require("jsonwebtoken");
 const cors = require("cors");
 require("dotenv").config(); // Load environment variables
 
@@ -23,24 +23,7 @@ const BACKEND_URL = process.env.BACKEND_URL || "https://mailer-backend-7ay3.onre
 
 // Middleware
 app.use(express.json());
-app.use(
-  cors({
-    origin: FRONTEND_URL,
-    credentials: true, // Allow cookies
-  })
-);
-
-// Session setup for Passport
-app.use(
-  session({
-    secret: process.env.SESSION_SECRET || "your-secret-key",
-    resave: false,
-    saveUninitialized: true,
-    cookie: { secure: process.env.NODE_ENV === "production" }, // Use secure cookies in production
-  })
-);
-app.use(passport.initialize());
-app.use(passport.session());
+app.use(cors({ origin: FRONTEND_URL })); // Allow CORS for the frontend
 
 // Debugging: Log environment variables
 console.log("MONGODB_URI:", process.env.MONGODB_URI);
@@ -147,26 +130,43 @@ app.get(
   passport.authenticate("google", { failureRedirect: `${FRONTEND_URL}/login` }),
   (req, res) => {
     console.log("Google OAuth2 callback triggered. User:", req.user);
-    res.redirect(FRONTEND_URL);
+
+    // Generate a JWT
+    const token = jwt.sign(
+      { id: req.user._id, email: req.user.email }, // Payload
+      process.env.JWT_SECRET, // Secret key
+      { expiresIn: "1h" } // Token expiration
+    );
+
+    // Redirect to the frontend with the token
+    res.redirect(`${FRONTEND_URL}?token=${token}`);
   }
 );
 
 // Middleware to check if the user is authenticated
-const isAuthenticated = (req, res, next) => {
-  if (req.isAuthenticated()) {
-    return next();
+const authenticateJWT = (req, res, next) => {
+  const token = req.headers["authorization"];
+  if (!token) {
+    return res.status(401).send({ message: "Unauthorized" });
   }
-  res.status(401).send({ message: "Unauthorized" });
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+    if (err) {
+      return res.status(403).send({ message: "Invalid token" });
+    }
+    req.user = user; // Attach the user to the request object
+    next();
+  });
 };
 
 // Fetch the logged-in user's details
-app.get("/auth/user", isAuthenticated, (req, res) => {
+app.get("/auth/user", authenticateJWT, (req, res) => {
   console.log("Fetching user data for:", req.user.email);
   res.json({ user: req.user });
 });
 
 // Handle sending emails
-app.post("/send-email", isAuthenticated, upload.fields([{ name: "csvFile" }, { name: "contentFile" }]), async (req, res) => {
+app.post("/send-email", authenticateJWT, upload.fields([{ name: "csvFile" }, { name: "contentFile" }]), async (req, res) => {
   const { subject, manualText, isScheduled, sendAt } = req.body;
 
   if (!req.files || !req.files.csvFile) {
@@ -205,7 +205,7 @@ app.post("/send-email", isAuthenticated, upload.fields([{ name: "csvFile" }, { n
 
       // Create a new campaign in MongoDB
       const newCampaign = new Campaign({
-        userId: req.user._id, // Link campaign to the logged-in user
+        userId: req.user.id, // Link campaign to the logged-in user
         subject,
         recipients: uniqueRecipients.map((recipient) => ({
           email: recipient.email,
@@ -222,15 +222,16 @@ app.post("/send-email", isAuthenticated, upload.fields([{ name: "csvFile" }, { n
       }
 
       // Use the user's access token to send emails
+      const user = await User.findById(req.user.id);
       const transporter = nodemailer.createTransport({
         service: "gmail",
         auth: {
           type: "OAuth2",
-          user: req.user.email, // User's email
-          accessToken: req.user.accessToken, // User's access token
+          user: user.email, // User's email
+          accessToken: user.accessToken, // User's access token
           clientId: process.env.GOOGLE_CLIENT_ID,
           clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-          refreshToken: req.user.refreshToken,
+          refreshToken: user.refreshToken,
         },
       });
 
@@ -248,7 +249,7 @@ app.post("/send-email", isAuthenticated, upload.fields([{ name: "csvFile" }, { n
         const finalHtml = `${personalizedContent}<p>Click <a href="${trackedLink}">here</a> to visit the link.</p>${trackingPixel}${unsubscribeLink}`;
 
         const mailOptions = {
-          from: req.user.email, // Use the user's email as the sender
+          from: user.email, // Use the user's email as the sender
           to: recipient.email,
           subject,
           text: personalizedContent, // Plain text fallback
@@ -328,9 +329,9 @@ app.get("/click/:trackingId", async (req, res) => {
 });
 
 // Fetch tracking reports
-app.get("/tracking-reports", isAuthenticated, async (req, res) => {
+app.get("/tracking-reports", authenticateJWT, async (req, res) => {
   try {
-    const campaigns = await Campaign.find({ userId: req.user._id }); // Fetch campaigns for the logged-in user
+    const campaigns = await Campaign.find({ userId: req.user.id }); // Fetch campaigns for the logged-in user
 
     // Calculate CTR and OTR for each campaign
     const trackingReports = campaigns.map((campaign) => {
@@ -357,7 +358,7 @@ app.get("/tracking-reports", isAuthenticated, async (req, res) => {
 });
 
 // Fetch campaign details
-app.get("/campaign-details/:campaignId", isAuthenticated, async (req, res) => {
+app.get("/campaign-details/:campaignId", authenticateJWT, async (req, res) => {
   const campaignId = req.params.campaignId;
 
   // Validate campaignId
@@ -366,7 +367,7 @@ app.get("/campaign-details/:campaignId", isAuthenticated, async (req, res) => {
   }
 
   try {
-    const campaign = await Campaign.findOne({ _id: campaignId, userId: req.user._id }); // Ensure the campaign belongs to the logged-in user
+    const campaign = await Campaign.findOne({ _id: campaignId, userId: req.user.id }); // Ensure the campaign belongs to the logged-in user
     if (!campaign) {
       return res.status(404).send({ message: "Campaign not found." });
     }
