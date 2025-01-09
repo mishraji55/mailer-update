@@ -1,6 +1,7 @@
 const express = require("express");
 const Campaign = require("../models/Campaign");
 const router = express.Router();
+const mongoose = require("mongoose"); 
 
 // Fetch tracking reports
 router.get("/tracking-reports", async (req, res) => {
