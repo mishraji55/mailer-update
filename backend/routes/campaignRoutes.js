@@ -67,7 +67,10 @@ router.get("/track/:trackingId", async (req, res) => {
         console.log(`Updated opened status for ${recipient.email}`);
       }
     }
-    res.sendFile(path.join(__dirname, "tracking-pixel.png")); // Send a 1x1 transparent pixel
+
+    // Send the 1x1 transparent pixel
+    const filePath = path.join(__dirname, "../tracking-pixels.png"); // Correct file name
+    res.sendFile(filePath);
   } catch (error) {
     console.error("Error tracking email open:", error);
     res.status(500).send("Internal Server Error");
@@ -97,10 +100,29 @@ router.get("/click/:trackingId", async (req, res) => {
 });
 
 // Handle unsubscribe
-router.get("/unsubscribe/:email", (req, res) => {
+router.get("/unsubscribe/:email", async (req, res) => {
   const email = decodeURIComponent(req.params.email);
   console.log(`Unsubscribe request received for email: ${email}`);
-  res.send(`You have unsubscribed from emails sent to ${email}`);
+
+  try {
+    // Find all campaigns where the email exists in recipients
+    const campaigns = await Campaign.find({ "recipients.email": email });
+
+    // Update the status of the recipient to "Unsubscribed"
+    for (const campaign of campaigns) {
+      const recipient = campaign.recipients.find((r) => r.email === email);
+      if (recipient) {
+        recipient.status = "Unsubscribed";
+        await campaign.save();
+        console.log(`Updated status to Unsubscribed for ${recipient.email}`);
+      }
+    }
+
+    res.send(`You have unsubscribed from emails sent to ${email}`);
+  } catch (error) {
+    console.error("Error handling unsubscribe:", error);
+    res.status(500).send("An error occurred while processing your unsubscribe request.");
+  }
 });
 
 module.exports = router;
