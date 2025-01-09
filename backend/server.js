@@ -1,10 +1,16 @@
+console.log("Loading .env file from:", __dirname + '/.env');
+require('dotenv').config({ path: __dirname + '/.env' });
 const express = require("express");
 const cors = require("cors");
 const connectDB = require("./config/db");
 const { startAgenda } = require("./services/emailService");
 const emailRoutes = require("./routes/emailRoutes");
 const campaignRoutes = require("./routes/campaignRoutes");
-require("dotenv").config();
+const config = require("./config");
+const path = require('path');
+const multer = require('multer');
+const upload = multer({ dest: 'uploads/' });
+
 
 const app = express();
 app.use(express.json());
