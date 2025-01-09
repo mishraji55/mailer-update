@@ -73,17 +73,23 @@ agenda.define("send email", async (job) => {
 })();
 
 // Add Agenda event listeners
+agenda.on("ready", () => {
+  console.log("Agenda is ready to process jobs.");
+});
+
 agenda.on("start", (job) => {
-  console.log(`Job ${job.attrs.name} starting`);
+  console.log(`Job ${job.attrs.name} starting at ${new Date()}`);
 });
 
 agenda.on("complete", (job) => {
-  console.log(`Job ${job.attrs.name} finished`);
+  console.log(`Job ${job.attrs.name} finished at ${new Date()}`);
 });
 
 agenda.on("fail", (err, job) => {
-  console.error(`Job ${job.attrs.name} failed:`, err);
+  console.error(`Job ${job.attrs.name} failed at ${new Date()}:`, err);
 });
+
+// Rest of your server.js code remains the same...
 
 // Define Campaign Schema
 const campaignSchema = new mongoose.Schema({
