@@ -1,7 +1,8 @@
 const express = require("express");
 const Campaign = require("../models/Campaign");
 const router = express.Router();
-const mongoose = require("mongoose"); 
+const mongoose = require("mongoose");
+const path = require("path");
 
 // Fetch tracking reports
 router.get("/tracking-reports", async (req, res) => {
@@ -48,6 +49,50 @@ router.get("/campaign-details/:campaignId", async (req, res) => {
   } catch (error) {
     console.error("Error fetching campaign details:", error);
     res.status(500).send({ message: "An error occurred while fetching campaign details." });
+  }
+});
+
+// Track email open (tracking pixel)
+router.get("/track/:trackingId", async (req, res) => {
+  const trackingId = req.params.trackingId;
+  console.log(`Email opened. Tracking ID: ${trackingId}`);
+
+  try {
+    const campaign = await Campaign.findOne({ "recipients.trackingId": trackingId });
+    if (campaign) {
+      const recipient = campaign.recipients.find((r) => r.trackingId === trackingId);
+      if (recipient) {
+        recipient.opened = true;
+        await campaign.save();
+        console.log(`Updated opened status for ${recipient.email}`);
+      }
+    }
+    res.sendFile(path.join(__dirname, "tracking-pixel.png")); // Send a 1x1 transparent pixel
+  } catch (error) {
+    console.error("Error tracking email open:", error);
+    res.status(500).send("Internal Server Error");
+  }
+});
+
+// Handle link click tracking
+router.get("/click/:trackingId", async (req, res) => {
+  const trackingId = req.params.trackingId;
+  console.log(`Link clicked. Tracking ID: ${trackingId}`);
+
+  try {
+    const campaign = await Campaign.findOne({ "recipients.trackingId": trackingId });
+    if (campaign) {
+      const recipient = campaign.recipients.find((r) => r.trackingId === trackingId);
+      if (recipient) {
+        recipient.linkVisited = true;
+        await campaign.save();
+        console.log(`Updated link visited status for ${recipient.email}`);
+      }
+    }
+    res.redirect("https://mailer1-d1qw.onrender.com"); // Redirect to your frontend URL
+  } catch (error) {
+    console.error("Error tracking link click:", error);
+    res.status(500).send("Internal Server Error");
   }
 });
 

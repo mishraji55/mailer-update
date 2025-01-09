@@ -26,7 +26,10 @@ exports.sendEmail = async (req, res) => {
       subject,
       recipients: recipients.map((recipient) => ({
         email: recipient.email,
-        trackingId: uuidv4(),
+        status: "Not Sent", // Default status
+        opened: false, // Default opened status
+        linkVisited: false, // Default linkVisited status
+        trackingId: uuidv4(), // Generate a unique tracking ID for each recipient
       })),
     });
     console.log("New Campaign Created:", newCampaign); // Debug log
@@ -37,10 +40,12 @@ exports.sendEmail = async (req, res) => {
     }
     console.log("Email Content:", emailContent); // Debug log
 
+    // Send or schedule emails for each recipient
     for (const recipient of recipients) {
       const personalizedContent = replacePersonalizationTags(emailContent, recipient);
       const trackingId = newCampaign.recipients.find((r) => r.email === recipient.email).trackingId;
 
+      // Add tracking pixel, tracked link, and unsubscribe link to the email content
       const trackingPixel = `<img src="https://mailer-backend-7ay3.onrender.com/track/${trackingId}" width="1" height="1" style="display:none;" />`;
       const trackedLink = `https://mailer-backend-7ay3.onrender.com/click/${trackingId}`;
       const unsubscribeLink = `<p>If you wish to unsubscribe, click <a href="https://mailer-backend-7ay3.onrender.com/unsubscribe/${encodeURIComponent(
@@ -50,6 +55,7 @@ exports.sendEmail = async (req, res) => {
       const finalHtml = `${personalizedContent}<p>Click <a href="${trackedLink}">here</a> to visit the link.</p>${trackingPixel}${unsubscribeLink}`;
 
       if (isScheduled === "true") {
+        // Schedule the email using Agenda
         await agenda.schedule(new Date(sendAt), "send email", {
           recipient: recipient.email,
           subject,
@@ -57,6 +63,7 @@ exports.sendEmail = async (req, res) => {
         });
         console.log(`Email scheduled for ${sendAt}`); // Debug log
       } else {
+        // Send the email immediately
         const transporter = nodemailer.createTransport({
           service: "gmail",
           auth: {
