@@ -1,0 +1,26 @@
+/* Define the bounce animation */
+@keyframes bounce {
+  0%,
+  20%,
+  50%,
+  80%,
+  100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+/* Apply the bounce effect on click */
+.bounce-effect:active {
+  animation: bounce 0.5s;
+}
+
+.bounce-effect:hover {
+  background-color: #1976d2; /* Darker blue on hover */
+  transition: background-color 0.3s ease;
+}

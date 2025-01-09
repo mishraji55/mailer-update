@@ -1,5 +1,5 @@
 import React from "react";
-
+import './ButtonStyles.css';
 const Sidebar = ({ onNewCampaign, onShowTrackingReports, trackingReports, onCampaignSelect }) => {
   return (
     <div style={{ width: "200px", backgroundColor: "#f4f4f4", padding: "20px", minHeight: "100vh" }}>
@@ -8,13 +8,17 @@ const Sidebar = ({ onNewCampaign, onShowTrackingReports, trackingReports, onCamp
         <li style={{ marginBottom: "10px" }}>
           <button
             onClick={onNewCampaign}
+            className="bounce-effect"
             style={{
               width: "100%",
               padding: "10px",
-              backgroundColor: "#4CAF50",
+              backgroundColor: "#2196F3", // Changed to blue
               color: "white",
               border: "none",
               cursor: "pointer",
+              borderRadius: "5px",
+              fontSize: "16px",
+              fontWeight: "bold",
             }}
           >
             New Campaign
@@ -26,10 +30,13 @@ const Sidebar = ({ onNewCampaign, onShowTrackingReports, trackingReports, onCamp
             style={{
               width: "100%",
               padding: "10px",
-              backgroundColor: "#4CAF50",
+              backgroundColor: "#2196F3", // Changed to blue
               color: "white",
               border: "none",
               cursor: "pointer",
+              borderRadius: "5px",
+              fontSize: "16px",
+              fontWeight: "bold",
             }}
           >
             Tracking Reports
@@ -49,10 +56,13 @@ const Sidebar = ({ onNewCampaign, onShowTrackingReports, trackingReports, onCamp
                   style={{
                     width: "100%",
                     padding: "10px",
-                    backgroundColor: "#4CAF50",
+                    backgroundColor: "#2196F3", // Changed to blue
                     color: "white",
                     border: "none",
                     cursor: "pointer",
+                    borderRadius: "5px",
+                    fontSize: "16px",
+                    fontWeight: "bold",
                   }}
                 >
                   {report.subject}

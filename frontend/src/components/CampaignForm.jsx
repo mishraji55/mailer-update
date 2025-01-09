@@ -1,5 +1,5 @@
 import React from "react";
-
+import './ButtonStyles.css';
 const CampaignForm = ({
   csvFile,
   setCsvFile,
@@ -112,14 +112,18 @@ const CampaignForm = ({
       {/* Submit Button */}
       <button
         onClick={onSendEmail}
-        style={{
-          width: "100%",
-          padding: "10px",
-          backgroundColor: "#4CAF50",
-          color: "white",
-          border: "none",
-          cursor: "pointer",
-        }}
+        className="bounce-effect"
+      style={{
+        width: "100%",
+        padding: "10px",
+        backgroundColor: "#2196F3", // Changed to blue
+        color: "white",
+        border: "none",
+        cursor: "pointer",
+        borderRadius: "5px",
+        fontSize: "16px",
+        fontWeight: "bold",
+      }}
       >
         Send Email
       </button>
