@@ -11,6 +11,9 @@ const Agenda = require("agenda");
 const moment = require("moment-timezone");
 require("dotenv").config(); // Load environment variables
 
+// Set server time zone to UTC
+process.env.TZ = "UTC";
+
 const app = express();
 const cors = require("cors");
 const upload = multer({ dest: "uploads/" });
@@ -63,14 +66,24 @@ agenda.define("send email", async (job) => {
   try {
     await agenda.start();
     console.log("Agenda started and ready to process jobs.");
+    agenda.processEvery("1 second"); // Check for new jobs every 1 second
   } catch (error) {
     console.error("Failed to start Agenda:", error);
   }
 })();
 
-// Increase concurrency and processing frequency
-agenda.processEvery("10 seconds"); // Check for new jobs every 10 seconds
-agenda.maxConcurrency(10); // Process up to 10 jobs concurrently
+// Add Agenda event listeners
+agenda.on("start", (job) => {
+  console.log(`Job ${job.attrs.name} starting`);
+});
+
+agenda.on("complete", (job) => {
+  console.log(`Job ${job.attrs.name} finished`);
+});
+
+agenda.on("fail", (err, job) => {
+  console.error(`Job ${job.attrs.name} failed:`, err);
+});
 
 // Define Campaign Schema
 const campaignSchema = new mongoose.Schema({
