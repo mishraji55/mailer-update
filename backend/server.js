@@ -4,6 +4,7 @@ const connectDB = require("./config/db");
 const { startAgenda } = require("./services/emailService");
 const emailRoutes = require("./routes/emailRoutes");
 const campaignRoutes = require("./routes/campaignRoutes");
+require("dotenv").config();
 
 const app = express();
 app.use(express.json());
