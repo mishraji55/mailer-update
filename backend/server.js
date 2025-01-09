@@ -34,7 +34,7 @@ const agenda = new Agenda({
 
 // Define the email job
 agenda.define("send email", async (job) => {
-  console.log("Processing job:", job.attrs.data);
+  console.log("Processing job:", job.attrs.data); // Log job data
   const { recipient, subject, content } = job.attrs.data;
   const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -45,15 +45,16 @@ agenda.define("send email", async (job) => {
   });
 
   try {
+    console.log(`Attempting to send email to ${recipient}`); // Log email attempt
     await transporter.sendMail({
       from: process.env.EMAIL_USER,
       to: recipient,
       subject,
       text: content,
     });
-    console.log(`Email sent to ${recipient}`);
+    console.log(`Email sent to ${recipient}`); // Log success
   } catch (error) {
-    console.error(`Error sending email to ${recipient}:`, error);
+    console.error(`Error sending email to ${recipient}:`, error); // Log error
   }
 });
 
@@ -66,6 +67,10 @@ agenda.define("send email", async (job) => {
     console.error("Failed to start Agenda:", error);
   }
 })();
+
+// Increase concurrency and processing frequency
+agenda.processEvery("10 seconds"); // Check for new jobs every 10 seconds
+agenda.maxConcurrency(10); // Process up to 10 jobs concurrently
 
 // Define Campaign Schema
 const campaignSchema = new mongoose.Schema({
