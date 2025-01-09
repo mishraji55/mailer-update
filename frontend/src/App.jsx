@@ -17,14 +17,28 @@ const App = () => {
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [showTrackingReports, setShowTrackingReports] = useState(false);
 
-  // Fetch tracking reports
+  // Fetch tracking reports and campaign details periodically
   useEffect(() => {
-    const getTrackingReports = async () => {
-      const reports = await fetchTrackingReports();
-      setTrackingReports(reports);
+    const fetchData = async () => {
+      try {
+        const reports = await fetchTrackingReports();
+        setTrackingReports(reports);
+
+        if (selectedCampaign) {
+          const campaignDetails = await fetchCampaignDetails(selectedCampaign._id);
+          setSelectedCampaign(campaignDetails);
+        }
+      } catch (error) {
+        console.error("Error fetching data:", error);
+      }
     };
-    getTrackingReports();
-  }, []);
+
+    // Fetch data every 1 second
+    const interval = setInterval(fetchData, 1000);
+
+    // Cleanup interval on unmount
+    return () => clearInterval(interval);
+  }, [selectedCampaign]);
 
   // Handle sending emails
   const handleSendEmail = async () => {
