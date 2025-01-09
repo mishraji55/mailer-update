@@ -8,6 +8,7 @@ const emailValidator = require("email-validator");
 const { v4: uuidv4 } = require("uuid");
 const mongoose = require("mongoose");
 const Agenda = require("agenda");
+const moment = require("moment-timezone");
 require("dotenv").config(); // Load environment variables
 
 const app = express();
@@ -16,9 +17,6 @@ const upload = multer({ dest: "uploads/" });
 
 app.use(express.json());
 app.use(cors());
-
-// Debugging: Log the MongoDB connection string
-console.log("MONGODB_URI:", process.env.MONGODB_URI);
 
 // Connect to MongoDB
 mongoose.connect(process.env.MONGODB_URI)
@@ -31,10 +29,12 @@ mongoose.connect(process.env.MONGODB_URI)
 // Set up Agenda
 const agenda = new Agenda({
   db: { address: process.env.MONGODB_URI, collection: "scheduledJobs" },
+  lockLifetime: 10000, // 10 seconds
 });
 
 // Define the email job
 agenda.define("send email", async (job) => {
+  console.log("Processing job:", job.attrs.data);
   const { recipient, subject, content } = job.attrs.data;
   const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -59,8 +59,12 @@ agenda.define("send email", async (job) => {
 
 // Start Agenda
 (async function () {
-  await agenda.start();
-  console.log("Agenda started and ready to process jobs.");
+  try {
+    await agenda.start();
+    console.log("Agenda started and ready to process jobs.");
+  } catch (error) {
+    console.error("Failed to start Agenda:", error);
+  }
 })();
 
 // Define Campaign Schema
