@@ -6,8 +6,8 @@ const fs = require("fs");
 const path = require("path");
 const emailValidator = require("email-validator");
 const { v4: uuidv4 } = require("uuid");
-const schedule = require("node-schedule");
 const mongoose = require("mongoose");
+const Agenda = require("agenda");
 require("dotenv").config(); // Load environment variables
 
 const app = express();
@@ -28,6 +28,41 @@ mongoose.connect(process.env.MONGODB_URI)
     process.exit(1); // Exit the application if MongoDB connection fails
   });
 
+// Set up Agenda
+const agenda = new Agenda({
+  db: { address: process.env.MONGODB_URI, collection: "scheduledJobs" },
+});
+
+// Define the email job
+agenda.define("send email", async (job) => {
+  const { recipient, subject, content } = job.attrs.data;
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+
+  try {
+    await transporter.sendMail({
+      from: process.env.EMAIL_USER,
+      to: recipient,
+      subject,
+      text: content,
+    });
+    console.log(`Email sent to ${recipient}`);
+  } catch (error) {
+    console.error(`Error sending email to ${recipient}:`, error);
+  }
+});
+
+// Start Agenda
+(async function () {
+  await agenda.start();
+  console.log("Agenda started and ready to process jobs.");
+})();
+
 // Define Campaign Schema
 const campaignSchema = new mongoose.Schema({
   subject: String,
@@ -41,15 +76,6 @@ const campaignSchema = new mongoose.Schema({
 });
 
 const Campaign = mongoose.model("Campaign", campaignSchema);
-
-// Set up transporter for sending emails
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
 
 // Helper function to replace tags with recipient data
 const replacePersonalizationTags = (content, recipientData) => {
@@ -129,29 +155,32 @@ app.post("/send-email", upload.fields([{ name: "csvFile" }, { name: "contentFile
 
         const finalHtml = `${personalizedContent}<p>Click <a href="${trackedLink}">here</a> to visit the link.</p>${trackingPixel}${unsubscribeLink}`;
 
-        const mailOptions = {
-          from: process.env.EMAIL_USER,
-          to: recipient.email,
-          subject,
-          text: personalizedContent, // Plain text fallback
-          html: finalHtml,
-        };
-
         if (isScheduled === "true") {
-          const scheduleDate = new Date(sendAt);
-          schedule.scheduleJob(scheduleDate, async () => {
-            try {
-              const result = await transporter.sendMail(mailOptions);
-              console.log(`Scheduled email sent successfully to ${recipient.email}`, result);
-              recipientData.status = "Sent";
-              await newCampaign.save();
-            } catch (error) {
-              console.error(`Error sending scheduled email to ${recipient.email}:`, error.message);
-            }
+          // Schedule the email using Agenda
+          await agenda.schedule(new Date(sendAt), "send email", {
+            recipient: recipient.email,
+            subject,
+            content: finalHtml,
           });
+          console.log(`Email scheduled for ${sendAt}`);
         } else {
+          // Send the email immediately
+          const transporter = nodemailer.createTransport({
+            service: "gmail",
+            auth: {
+              user: process.env.EMAIL_USER,
+              pass: process.env.EMAIL_PASS,
+            },
+          });
+
           try {
-            const result = await transporter.sendMail(mailOptions);
+            const result = await transporter.sendMail({
+              from: process.env.EMAIL_USER,
+              to: recipient.email,
+              subject,
+              text: personalizedContent,
+              html: finalHtml,
+            });
             console.log(`Email sent successfully to ${recipient.email}`, result);
             recipientData.status = "Sent";
             await newCampaign.save();
