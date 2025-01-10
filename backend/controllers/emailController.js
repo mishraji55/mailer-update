@@ -8,44 +8,45 @@ const { v4: uuidv4 } = require("uuid");
 const nodemailer = require("nodemailer");
 
 exports.sendEmail = async (req, res) => {
-  console.log("Received request to send email"); // Debug log
-  const { subject, manualText, isScheduled, sendAt } = req.body;
+  console.log("Received request to send email");
+  const { subject, manualText, isScheduled, sendAt, userId } = req.body; // Add userId
   const csvFile = req.files.csvFile[0];
   const contentFile = req.files.contentFile ? req.files.contentFile[0] : null;
 
-  console.log("CSV File:", csvFile); // Debug log
-  console.log("Content File:", contentFile); // Debug log
+  console.log("CSV File:", csvFile);
+  console.log("Content File:", contentFile);
 
   try {
     // Parse CSV file
     const recipients = await parseCSV(csvFile.path);
-    console.log("Recipients:", recipients); // Debug log
+    console.log("Recipients:", recipients);
 
-    // Create a new campaign in MongoDB
+    // Create a new campaign in MongoDB with userId
     const newCampaign = await Campaign.create({
       subject,
+      userId, // Associate campaign with the user
       recipients: recipients.map((recipient) => ({
         email: recipient.email,
-        status: "Not Sent", // Default status
-        opened: false, // Default opened status
-        linkVisited: false, // Default linkVisited status
-        trackingId: uuidv4(), // Generate a unique tracking ID for each recipient
+        status: "Not Sent",
+        opened: false,
+        linkVisited: false,
+        trackingId: uuidv4(),
       })),
     });
-    console.log("New Campaign Created:", newCampaign); // Debug log
+    console.log("New Campaign Created:", newCampaign);
 
     let emailContent = manualText || "";
     if (contentFile) {
       emailContent = fs.readFileSync(contentFile.path, "utf-8");
     }
-    console.log("Email Content:", emailContent); // Debug log
+    console.log("Email Content:", emailContent);
 
     // Send or schedule emails for each recipient
     for (const recipient of recipients) {
       const personalizedContent = replacePersonalizationTags(emailContent, recipient);
       const trackingId = newCampaign.recipients.find((r) => r.email === recipient.email).trackingId;
 
-      // Add tracking pixel, tracked link, and unsubscribe link to the email content
+      // Add tracking pixel, tracked link, and unsubscribe link
       const trackingPixel = `<img src="https://mailer-backend-7ay3.onrender.com/track/${trackingId}" width="1" height="1" style="display:none;" />`;
       const trackedLink = `https://mailer-backend-7ay3.onrender.com/click/${trackingId}`;
       const unsubscribeLink = `<p>If you wish to unsubscribe, click <a href="https://mailer-backend-7ay3.onrender.com/unsubscribe/${encodeURIComponent(
@@ -61,7 +62,7 @@ exports.sendEmail = async (req, res) => {
           subject,
           content: finalHtml,
         });
-        console.log(`Email scheduled for ${sendAt}`); // Debug log
+        console.log(`Email scheduled for ${sendAt}`);
       } else {
         // Send the email immediately
         const transporter = nodemailer.createTransport({
@@ -78,7 +79,7 @@ exports.sendEmail = async (req, res) => {
           subject,
           html: finalHtml,
         });
-        console.log(`Email sent successfully to ${recipient.email}`, result); // Debug log
+        console.log(`Email sent successfully to ${recipient.email}`, result);
 
         // Update recipient status in the campaign
         const recipientData = newCampaign.recipients.find((r) => r.email === recipient.email);
@@ -93,7 +94,7 @@ exports.sendEmail = async (req, res) => {
 
     res.status(200).send({ message: "Emails processed successfully!", campaignId: newCampaign._id });
   } catch (error) {
-    console.error("Error processing emails:", error); // Debug log
+    console.error("Error processing emails:", error);
     res.status(500).send({ message: "Error processing emails." });
   }
 };

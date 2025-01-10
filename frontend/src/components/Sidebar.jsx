@@ -1,5 +1,6 @@
 import React from "react";
 import './ButtonStyles.css';
+
 const Sidebar = ({ onNewCampaign, onShowTrackingReports, trackingReports, onCampaignSelect }) => {
   return (
     <div style={{ width: "200px", backgroundColor: "#f4f4f4", padding: "20px", minHeight: "100vh" }}>
@@ -12,7 +13,7 @@ const Sidebar = ({ onNewCampaign, onShowTrackingReports, trackingReports, onCamp
             style={{
               width: "100%",
               padding: "10px",
-              backgroundColor: "#2196F3", // Changed to blue
+              backgroundColor: "#2196F3",
               color: "white",
               border: "none",
               cursor: "pointer",
@@ -30,7 +31,7 @@ const Sidebar = ({ onNewCampaign, onShowTrackingReports, trackingReports, onCamp
             style={{
               width: "100%",
               padding: "10px",
-              backgroundColor: "#2196F3", // Changed to blue
+              backgroundColor: "#2196F3",
               color: "white",
               border: "none",
               cursor: "pointer",
@@ -50,13 +51,13 @@ const Sidebar = ({ onNewCampaign, onShowTrackingReports, trackingReports, onCamp
           <h4>Campaigns</h4>
           <ul style={{ listStyle: "none", padding: 0 }}>
             {trackingReports.map((report) => (
-              <li key={report._id} style={{ marginBottom: "10px" }}>
+              <li key={report._id} style={{ marginBottom: "10px" }}> {/* Use report._id as the key */}
                 <button
                   onClick={() => onCampaignSelect(report._id)}
                   style={{
                     width: "100%",
                     padding: "10px",
-                    backgroundColor: "#2196F3", // Changed to blue
+                    backgroundColor: "#2196F3",
                     color: "white",
                     border: "none",
                     cursor: "pointer",

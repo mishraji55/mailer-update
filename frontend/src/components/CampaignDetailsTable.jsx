@@ -1,6 +1,11 @@
 import React from "react";
 
 const CampaignDetailsTable = ({ campaign }) => {
+  // Check if campaign or recipients is undefined
+  if (!campaign || !campaign.recipients) {
+    return <div>No campaign data available.</div>;
+  }
+
   return (
     <div>
       <h2>{campaign.subject}</h2>

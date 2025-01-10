@@ -3,12 +3,16 @@ const Campaign = require("../models/Campaign");
 const router = express.Router();
 const mongoose = require("mongoose");
 const path = require("path");
-const config = require("../config");
 
-// Fetch tracking reports
+// Fetch tracking reports for a specific user
 router.get("/tracking-reports", async (req, res) => {
+  const userId = req.query.userId; // Get userId from query params
+  if (!userId) {
+    return res.status(400).send({ message: "User ID is required." });
+  }
+
   try {
-    const campaigns = await Campaign.find({});
+    const campaigns = await Campaign.find({ userId }); // Filter campaigns by userId
 
     const trackingReports = campaigns.map((campaign) => {
       const totalEmailsSent = campaign.recipients.length;
@@ -33,19 +37,26 @@ router.get("/tracking-reports", async (req, res) => {
   }
 });
 
-// Fetch campaign details
+// Fetch campaign details (only for campaigns owned by the user)
 router.get("/campaign-details/:campaignId", async (req, res) => {
   const campaignId = req.params.campaignId;
+  const userId = req.query.userId; // Get userId from query params
 
   if (!mongoose.Types.ObjectId.isValid(campaignId)) {
     return res.status(400).send({ message: "Invalid campaign ID." });
   }
 
   try {
-    const campaign = await Campaign.findById(campaignId);
+    const campaign = await Campaign.findOne({ _id: campaignId, userId }); // Ensure the campaign belongs to the user
     if (!campaign) {
-      return res.status(404).send({ message: "Campaign not found." });
+      return res.status(404).send({ message: "Campaign not found or unauthorized." });
     }
+
+    // Ensure recipients array exists
+    if (!campaign.recipients) {
+      campaign.recipients = [];
+    }
+
     res.status(200).json(campaign);
   } catch (error) {
     console.error("Error fetching campaign details:", error);
@@ -70,7 +81,7 @@ router.get("/track/:trackingId", async (req, res) => {
     }
 
     // Send the 1x1 transparent pixel
-    const filePath = path.join(__dirname, "../tracking-pixels.png"); // Correct file name
+    const filePath = path.join(__dirname, "../tracking-pixels.png");
     res.sendFile(filePath);
   } catch (error) {
     console.error("Error tracking email open:", error);
