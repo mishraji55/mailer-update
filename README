@@ -1,48 +1,52 @@
+
+---
+
 # Mass Email Sender Tool
 
-The **Mass Email Sender Tool** is a web application that allows users to send personalized emails to a large number of recipients efficiently. It supports features like email scheduling, personalization tags, email tracking (open rates and click-through rates), and compliance with GDPR and CAN-SPAM regulations.
+The **Mass Email Sender Tool** is a web application for sending personalized emails to a large number of recipients efficiently. It includes features like email scheduling, personalization tags, email tracking (open rates and click-through rates), and compliance with GDPR and CAN-SPAM regulations.
 
 ---
 
 ## Features
 
-- **Personalized Emails**: Use personalization tags (e.g., `{{name}}`, `{{email}}`) to customize email content for each recipient.
-- **Email Content Formats**: Supports plain text, HTML, and Markdown for email content.
-- **Email Scheduling**: Schedule emails to be sent at a specific date and time.
-- **Email Tracking**: Track email opens and link clicks using tracking pixels and tracked links.
-- **Batch Sending**: Send emails in batches to avoid overwhelming the email service provider.
-- **Rate Limiting**: Introduce delays between batches to comply with email service provider limits.
-- **GDPR Compliance**: Includes an opt-out link and requires user consent before sending emails.
-- **Data Retention Policy**: Automatically deletes old campaigns and recipient data after a specified retention period.
-- **User-Specific Campaigns**: Each user can only view and manage campaigns they created.
+- **Personalized Emails**: Use tags like `{{name}}` and `{{email}}` for custom email content.
+- **Email Formats**: Supports plain text, HTML, and Markdown.
+- **Scheduling**: Schedule emails for specific dates and times.
+- **Tracking**: Track email opens and link clicks.
+- **Batch Sending**: Send emails in batches to comply with service provider limits.
+- **GDPR Compliance**: Includes an opt-out link and user consent mechanisms.
+- **Data Retention**: Automatically deletes old campaigns and recipient data.
+- **User Campaigns**: Users can manage only their own campaigns.
 
 ---
 
 ## Technologies Used
 
-- **Frontend**:
-  - React (with Vite)
-  - Auth0 for authentication
-- **Backend**:
-  - Node.js
-  - Express.js
-  - MongoDB (for storing campaigns and recipient data)
-  - Nodemailer (for sending emails)
-  - Agenda (for scheduling emails)
-- **Other Tools**:
-  - Multer (for file uploads)
-  - CSV Parser (for parsing recipient lists)
-  - Dotenv (for environment variables)
+**Frontend**:
+- React (with Vite)
+- Auth0 for authentication
+
+**Backend**:
+- Node.js
+- Express.js
+- MongoDB (for storing campaigns and recipient data)
+- Nodemailer (for email delivery)
+- Agenda (for scheduling emails)
+
+**Other Tools**:
+- Multer (file uploads)
+- CSV Parser (recipient lists)
+- Dotenv (environment variables)
 
 ---
 
 ## Prerequisites
 
-Before running the application, ensure you have the following installed:
+Before running the application, ensure the following are installed:
 
-- Node.js (v16 or higher)
-- MongoDB (or a MongoDB Atlas connection string)
-- Git (optional, for cloning the repository)
+- [Node.js](https://nodejs.org/) (v16 or higher)
+- [MongoDB](https://www.mongodb.com/) (or MongoDB Atlas)
+- [Git](https://git-scm.com/) (optional for cloning the repository)
 
 ---
 
@@ -52,44 +56,44 @@ Before running the application, ensure you have the following installed:
 
 ```bash
 git clone https://github.com/codedpool/mailer.git
-cd mass-email-sender
+cd mailer
 ```
 
 ### 2. Install Dependencies
 
-Install dependencies for both the frontend and backend:
+Install dependencies for the backend and frontend:
 
 ```bash
-# Install backend dependencies
+# Backend dependencies
 cd backend
 npm install
 
-# Install frontend dependencies
+# Frontend dependencies
 cd ../frontend
 npm install
 ```
 
 ### 3. Set Up Environment Variables
 
-Create a `.env` file in the `backend` and `frontend` directories with the following variables:
+Create `.env` files in the `backend` and `frontend` directories with the following variables:
 
 #### Backend `.env`
 
-```plaintext
+```env
 MONGODB_URI=mongodb://localhost:27017/mailer
 EMAIL_USER=your-email@gmail.com
 EMAIL_PASS=your-email-password
 PORT=10000
 DATA_RETENTION_DAYS=30
-BACKEND_URL=https://localhost:10000
+BACKEND_URL=http://localhost:10000
 BATCH_SIZE=10
 DELAY_BETWEEN_BATCHES=10000
 ```
 
 #### Frontend `.env`
 
-```plaintext
-VITE_BACKEND_URL=https://localhost:10000
+```env
+VITE_BACKEND_URL=http://localhost:10000
 VITE_FRONTEND_URL=http://localhost:5173
 VITE_AUTH0_DOMAIN=your-auth0-domain.auth0.com
 VITE_AUTH0_CLIENT_ID=your-auth0-client-id
@@ -97,8 +101,6 @@ VITE_AUTH0_REDIRECT_URI=http://localhost:5173
 ```
 
 ### 4. Start the Backend Server
-
-Navigate to the `backend` directory and start the server:
 
 ```bash
 cd backend
@@ -108,8 +110,6 @@ npm start
 The backend server will run on `http://localhost:10000`.
 
 ### 5. Start the Frontend Application
-
-Navigate to the `frontend` directory and start the development server:
 
 ```bash
 cd frontend
@@ -122,35 +122,27 @@ The frontend application will run on `http://localhost:5173`.
 
 ## Usage
 
-### 1. Log In
-- Use the **Login** button to authenticate using Auth0.
-- Only authenticated users can access the application.
-
-### 2. Create a New Campaign
-- Upload a CSV file containing recipient email addresses and personalized fields.
-- Enter the email subject and content (plain text, HTML, or Markdown).
-- Optionally, schedule the email for a later date and time.
-
-### 3. Track Campaign Performance
-- View tracking reports for all campaigns, including open rates and click-through rates.
-- Click on a campaign to view detailed recipient-level tracking data.
-
-### 4. Unsubscribe
-- Recipients can unsubscribe using the opt-out link included in every email.
+1. **Log In**: Use the **Login** button to authenticate with Auth0.
+2. **Create Campaign**: 
+   - Upload a CSV file with recipient data.
+   - Provide the email subject and content.
+   - Schedule the campaign if needed.
+3. **Track Performance**:
+   - View campaign-level and recipient-level tracking reports.
+4. **Manage Unsubscribes**:
+   - Recipients can unsubscribe using the opt-out link included in emails.
 
 ---
 
 ## API Endpoints
 
-### Backend API
-
 | Endpoint                     | Method | Description                                      |
 |------------------------------|--------|--------------------------------------------------|
-| `/send-email`                | POST   | Send or schedule emails to recipients.          |
-| `/tracking-reports`          | GET    | Fetch tracking reports for all campaigns.       |
-| `/campaign-details/:campaignId` | GET    | Fetch details of a specific campaign.           |
-| `/track/:trackingId`         | GET    | Track email opens (used by the tracking pixel). |
-| `/click/:trackingId`         | GET    | Track link clicks and redirect to frontend.     |
+| `/send-email`                | POST   | Send or schedule emails.                        |
+| `/tracking-reports`          | GET    | Get tracking reports for campaigns.             |
+| `/campaign-details/:id`      | GET    | Fetch specific campaign details.                |
+| `/track/:id`                 | GET    | Track email opens via tracking pixels.          |
+| `/click/:id`                 | GET    | Track link clicks and redirects.                |
 | `/unsubscribe/:email`        | GET    | Handle unsubscribe requests.                    |
 
 ---
@@ -185,29 +177,32 @@ mass-email-sender/
 
 ## Contributing
 
-Contributions are welcome! Please follow these steps:
+Contributions are welcome! Follow these steps:
 
 1. Fork the repository.
-2. Create a new branch for your feature or bugfix.
-3. Commit your changes and push to the branch.
+2. Create a new branch.
+3. Commit changes and push them.
 4. Submit a pull request.
 
 ---
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the [MIT License](LICENSE).
 
 ---
 
 ## Contact
 
-For questions or feedback, please contact:
+For questions or feedback:
 
-- **Your Name**  
-- **Email**: codedpool10@gmail.com 
-- **GitHub**: https://github.com/codedpool
+- **Name**: Your Name  
+- **Email**: codedpool10@gmail.com  
+- **GitHub**: [codedpool](https://github.com/codedpool)
 
 ---
 
-Enjoy using the **Mass Email Sender Tool**! 🚀
+Enjoy using the **Mass Email Sender Tool**! 🚀🦊
+
+---
+
