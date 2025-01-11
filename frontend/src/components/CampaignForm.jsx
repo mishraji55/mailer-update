@@ -1,5 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import './ButtonStyles.css';
+
 const CampaignForm = ({
   csvFile,
   setCsvFile,
@@ -16,6 +17,8 @@ const CampaignForm = ({
   onSendEmail,
   status,
 }) => {
+  const [hasConsent, setHasConsent] = useState(false); // State for GDPR consent
+
   return (
     <div>
       <h1>Email Sender</h1>
@@ -109,21 +112,36 @@ const CampaignForm = ({
         </div>
       )}
 
+      {/* GDPR Consent Checkbox */}
+      <div style={{ marginBottom: "20px", display: "flex", alignItems: "center" }}>
+        <label htmlFor="gdprConsent" style={{ fontWeight: "bold" }}>
+          I confirm that I have obtained explicit consent from all recipients to send them emails.
+        </label>
+        <input
+          id="gdprConsent"
+          type="checkbox"
+          checked={hasConsent}
+          onChange={(e) => setHasConsent(e.target.checked)}
+          style={{ marginLeft: "10px" }}
+        />
+      </div>
+
       {/* Submit Button */}
       <button
         onClick={onSendEmail}
         className="bounce-effect"
-      style={{
-        width: "100%",
-        padding: "10px",
-        backgroundColor: "#2196F3", // Changed to blue
-        color: "white",
-        border: "none",
-        cursor: "pointer",
-        borderRadius: "5px",
-        fontSize: "16px",
-        fontWeight: "bold",
-      }}
+        style={{
+          width: "100%",
+          padding: "10px",
+          backgroundColor: hasConsent ? "#2196F3" : "#ccc", // Disable button if no consent
+          color: "white",
+          border: "none",
+          cursor: hasConsent ? "pointer" : "not-allowed", // Disable pointer if no consent
+          borderRadius: "5px",
+          fontSize: "16px",
+          fontWeight: "bold",
+        }}
+        disabled={!hasConsent} // Disable button if no consent
       >
         Send Email
       </button>
