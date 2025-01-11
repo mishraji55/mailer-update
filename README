@@ -1,6 +1,3 @@
-
----
-
 # Mass Email Sender Tool
 
 The **Mass Email Sender Tool** is a web application that allows users to send personalized emails to a large number of recipients efficiently. It supports features like email scheduling, personalization tags, email tracking (open rates and click-through rates), and compliance with GDPR and CAN-SPAM regulations.
@@ -87,3 +84,130 @@ DATA_RETENTION_DAYS=30
 BACKEND_URL=https://localhost:10000
 BATCH_SIZE=10
 DELAY_BETWEEN_BATCHES=10000
+```
+
+#### Frontend `.env`
+
+```plaintext
+VITE_BACKEND_URL=https://localhost:10000
+VITE_FRONTEND_URL=http://localhost:5173
+VITE_AUTH0_DOMAIN=your-auth0-domain.auth0.com
+VITE_AUTH0_CLIENT_ID=your-auth0-client-id
+VITE_AUTH0_REDIRECT_URI=http://localhost:5173
+```
+
+### 4. Start the Backend Server
+
+Navigate to the `backend` directory and start the server:
+
+```bash
+cd backend
+npm start
+```
+
+The backend server will run on `http://localhost:10000`.
+
+### 5. Start the Frontend Application
+
+Navigate to the `frontend` directory and start the development server:
+
+```bash
+cd frontend
+npm run dev
+```
+
+The frontend application will run on `http://localhost:5173`.
+
+---
+
+## Usage
+
+### 1. Log In
+- Use the **Login** button to authenticate using Auth0.
+- Only authenticated users can access the application.
+
+### 2. Create a New Campaign
+- Upload a CSV file containing recipient email addresses and personalized fields.
+- Enter the email subject and content (plain text, HTML, or Markdown).
+- Optionally, schedule the email for a later date and time.
+
+### 3. Track Campaign Performance
+- View tracking reports for all campaigns, including open rates and click-through rates.
+- Click on a campaign to view detailed recipient-level tracking data.
+
+### 4. Unsubscribe
+- Recipients can unsubscribe using the opt-out link included in every email.
+
+---
+
+## API Endpoints
+
+### Backend API
+
+| Endpoint                     | Method | Description                                      |
+|------------------------------|--------|--------------------------------------------------|
+| `/send-email`                | POST   | Send or schedule emails to recipients.          |
+| `/tracking-reports`          | GET    | Fetch tracking reports for all campaigns.       |
+| `/campaign-details/:campaignId` | GET    | Fetch details of a specific campaign.           |
+| `/track/:trackingId`         | GET    | Track email opens (used by the tracking pixel). |
+| `/click/:trackingId`         | GET    | Track link clicks and redirect to frontend.     |
+| `/unsubscribe/:email`        | GET    | Handle unsubscribe requests.                    |
+
+---
+
+## Folder Structure
+
+```
+mass-email-sender/
+├── backend/
+│   ├── config/
+│   ├── controllers/
+│   ├── models/
+│   ├── routes/
+│   ├── services/
+│   ├── utils/
+│   ├── server.js
+│   └── .env
+├── frontend/
+│   ├── public/
+│   ├── src/
+│   │   ├── components/
+│   │   ├── services/
+│   │   ├── App.jsx
+│   │   └── main.jsx
+│   ├── .env
+│   └── vite.config.js
+├── README.md
+└── .gitignore
+```
+
+---
+
+## Contributing
+
+Contributions are welcome! Please follow these steps:
+
+1. Fork the repository.
+2. Create a new branch for your feature or bugfix.
+3. Commit your changes and push to the branch.
+4. Submit a pull request.
+
+---
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
+---
+
+## Contact
+
+For questions or feedback, please contact:
+
+- **Your Name**  
+- **Email**: codedpool10@gmail.com 
+- **GitHub**: https://github.com/codedpool
+
+---
+
+Enjoy using the **Mass Email Sender Tool**! 🚀
