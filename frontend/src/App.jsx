@@ -169,7 +169,7 @@ const App = () => {
           >
             {/* Logo */}
             <img
-              src="/collage.png" // Ensure the image is in the public folder
+              src="/collage.png" 
               alt="Login"
               style={{ 
                 width: "100%", // Cover the entire width of the card
