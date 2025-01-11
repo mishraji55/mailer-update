@@ -19,10 +19,12 @@ const App = () => {
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [showTrackingReports, setShowTrackingReports] = useState(false);
 
-  // Watch for changes in `isAuthenticated` and force a re-render
+  // Dynamically set the returnTo URL based on the environment
+  const returnToUrl = import.meta.env.VITE_RETURN_TO_URL || window.location.origin;
+
+  // Reset all state when the user logs out
   useEffect(() => {
     if (!isAuthenticated) {
-      // Reset all state variables to their initial values
       setCsvFile(null);
       setContentFile(null);
       setManualText("");
@@ -103,7 +105,7 @@ const App = () => {
       {isAuthenticated && (
         <div style={{ position: "absolute", top: 10, right: 10 }}>
           <button
-            onClick={() => logout({ returnTo: window.location.origin })}
+            onClick={() => logout({ returnTo: returnToUrl })}
             style={{
               padding: "10px",
               backgroundColor: "#2196F3",
