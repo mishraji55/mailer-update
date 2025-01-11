@@ -1,0 +1,89 @@
+
+---
+
+# Mass Email Sender Tool
+
+The **Mass Email Sender Tool** is a web application that allows users to send personalized emails to a large number of recipients efficiently. It supports features like email scheduling, personalization tags, email tracking (open rates and click-through rates), and compliance with GDPR and CAN-SPAM regulations.
+
+---
+
+## Features
+
+- **Personalized Emails**: Use personalization tags (e.g., `{{name}}`, `{{email}}`) to customize email content for each recipient.
+- **Email Content Formats**: Supports plain text, HTML, and Markdown for email content.
+- **Email Scheduling**: Schedule emails to be sent at a specific date and time.
+- **Email Tracking**: Track email opens and link clicks using tracking pixels and tracked links.
+- **Batch Sending**: Send emails in batches to avoid overwhelming the email service provider.
+- **Rate Limiting**: Introduce delays between batches to comply with email service provider limits.
+- **GDPR Compliance**: Includes an opt-out link and requires user consent before sending emails.
+- **Data Retention Policy**: Automatically deletes old campaigns and recipient data after a specified retention period.
+- **User-Specific Campaigns**: Each user can only view and manage campaigns they created.
+
+---
+
+## Technologies Used
+
+- **Frontend**:
+  - React (with Vite)
+  - Auth0 for authentication
+- **Backend**:
+  - Node.js
+  - Express.js
+  - MongoDB (for storing campaigns and recipient data)
+  - Nodemailer (for sending emails)
+  - Agenda (for scheduling emails)
+- **Other Tools**:
+  - Multer (for file uploads)
+  - CSV Parser (for parsing recipient lists)
+  - Dotenv (for environment variables)
+
+---
+
+## Prerequisites
+
+Before running the application, ensure you have the following installed:
+
+- Node.js (v16 or higher)
+- MongoDB (or a MongoDB Atlas connection string)
+- Git (optional, for cloning the repository)
+
+---
+
+## Setup Instructions
+
+### 1. Clone the Repository
+
+```bash
+git clone https://github.com/codedpool/mailer.git
+cd mass-email-sender
+```
+
+### 2. Install Dependencies
+
+Install dependencies for both the frontend and backend:
+
+```bash
+# Install backend dependencies
+cd backend
+npm install
+
+# Install frontend dependencies
+cd ../frontend
+npm install
+```
+
+### 3. Set Up Environment Variables
+
+Create a `.env` file in the `backend` and `frontend` directories with the following variables:
+
+#### Backend `.env`
+
+```plaintext
+MONGODB_URI=mongodb://localhost:27017/mailer
+EMAIL_USER=your-email@gmail.com
+EMAIL_PASS=your-email-password
+PORT=10000
+DATA_RETENTION_DAYS=30
+BACKEND_URL=https://localhost:10000
+BATCH_SIZE=10
+DELAY_BETWEEN_BATCHES=10000
