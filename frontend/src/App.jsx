@@ -81,7 +81,7 @@ const App = () => {
   };
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh" }}>
+    <div style={{ display: "flex", minHeight: "100vh", width: "100%" }}>
       {/* Logout Button (Top Right Corner) */}
       {isAuthenticated && (
         <div style={{ position: "absolute", top: 10, right: 10 }}>
@@ -120,7 +120,7 @@ const App = () => {
             trackingReports={trackingReports}
             onCampaignSelect={handleCampaignSelect}
           />
-          <div style={{ flex: 1, padding: "20px", backgroundColor: "#f9f9f9" }}>
+          <div style={{ flex: 1, padding: "20px" }}>
             {showTrackingReports ? (
               <TrackingReportsTable trackingReports={trackingReports} onCampaignSelect={handleCampaignSelect} />
             ) : selectedCampaign ? (
@@ -167,16 +167,17 @@ const App = () => {
               width: "100%",
             }}
           >
-                      <img
-            src="/collage.png" // Ensure the image is in the public folder
-            alt="Login"
-            style={{ 
-              width: "100%", // Cover the entire width of the card
-              height: "auto", // Maintain aspect ratio
-              borderRadius: "10px", // Optional: Add rounded corners
-              marginBottom: "20px", // Add spacing below the image
-            }}
-          />
+            {/* Logo */}
+            <img
+              src="/collage.png" // Ensure the image is in the public folder
+              alt="Login"
+              style={{ 
+                width: "100%", // Cover the entire width of the card
+                height: "auto", // Maintain aspect ratio
+                borderRadius: "10px", // Optional: Add rounded corners
+                marginBottom: "20px", // Add spacing below the image
+              }}
+            />
 
             {/* Login Message */}
             <h2 style={{ marginBottom: "20px", color: "#333" }}>Welcome to the Mass Mail Sender</h2>
