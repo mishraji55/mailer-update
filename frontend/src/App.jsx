@@ -82,18 +82,24 @@ const App = () => {
 
   return (
     <div style={{ display: "flex", minHeight: "100vh" }}>
-      {/* Login/Logout Button */}
-      <div style={{ position: "absolute", top: 10, right: 10 }}>
-        {!isAuthenticated ? (
-          <button onClick={() => loginWithRedirect()} style={{ padding: "10px", backgroundColor: "#2196F3", color: "white", border: "none", borderRadius: "5px", cursor: "pointer" }}>
-            Login
-          </button>
-        ) : (
-          <button onClick={() => logout()} style={{ padding: "10px", backgroundColor: "#2196F3", color: "white", border: "none", borderRadius: "5px", cursor: "pointer" }}>
+      {/* Logout Button (Top Right Corner) */}
+      {isAuthenticated && (
+        <div style={{ position: "absolute", top: 10, right: 10 }}>
+          <button
+            onClick={() => logout()}
+            style={{
+              padding: "10px",
+              backgroundColor: "#2196F3",
+              color: "white",
+              border: "none",
+              borderRadius: "5px",
+              cursor: "pointer",
+            }}
+          >
             Logout
           </button>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Main Content */}
       {isAuthenticated ? (
@@ -140,8 +146,57 @@ const App = () => {
           </div>
         </>
       ) : (
-        <div style={{ flex: 1, display: "flex", justifyContent: "center", alignItems: "center", fontSize: "24px", color: "#555" }}>
-          Please log in to use the application.
+        // Centered Login Card
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+            width: "100%",
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: "10px",
+              boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+              padding: "20px",
+              textAlign: "center",
+              maxWidth: "400px",
+              width: "100%",
+            }}
+          >
+                      <img
+            src="/collage.png" // Ensure the image is in the public folder
+            alt="Login"
+            style={{ 
+              width: "100%", // Cover the entire width of the card
+              height: "auto", // Maintain aspect ratio
+              borderRadius: "10px", // Optional: Add rounded corners
+              marginBottom: "20px", // Add spacing below the image
+            }}
+          />
+
+            {/* Login Message */}
+            <h2 style={{ marginBottom: "20px", color: "#333" }}>Welcome to the Mass Mail Sender</h2>
+
+            {/* Login Button */}
+            <button
+              onClick={() => loginWithRedirect()}
+              style={{
+                padding: "10px 20px",
+                backgroundColor: "#2196F3",
+                color: "white",
+                border: "none",
+                borderRadius: "5px",
+                cursor: "pointer",
+                fontSize: "16px",
+              }}
+            >
+              Login
+            </button>
+          </div>
         </div>
       )}
     </div>
