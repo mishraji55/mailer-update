@@ -19,6 +19,23 @@ const App = () => {
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [showTrackingReports, setShowTrackingReports] = useState(false);
 
+  // Watch for changes in `isAuthenticated` and force a re-render
+  useEffect(() => {
+    if (!isAuthenticated) {
+      // Reset all state variables to their initial values
+      setCsvFile(null);
+      setContentFile(null);
+      setManualText("");
+      setSubject("");
+      setIsScheduled(false);
+      setScheduleDate("");
+      setStatus("");
+      setTrackingReports([]);
+      setSelectedCampaign(null);
+      setShowTrackingReports(false);
+    }
+  }, [isAuthenticated]);
+
   // Fetch tracking reports and campaign details periodically
   useEffect(() => {
     if (isAuthenticated) {
