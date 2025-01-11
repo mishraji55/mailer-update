@@ -91,6 +91,7 @@ DELAY_BETWEEN_BATCHES=10000
 ```
 
 #### Frontend `.env`
+Use VITE_ before frontend URLs
 
 ```env
 VITE_BACKEND_URL=http://localhost:10000
