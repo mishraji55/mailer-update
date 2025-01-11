@@ -1,10 +1,7 @@
-
 ---
-
-# Mass Email Sender Tool
+# Mass Email Sender Tool🦊📧
 
 The **Mass Email Sender Tool** is a web application for sending personalized emails to a large number of recipients efficiently. It includes features like email scheduling, personalization tags, email tracking (open rates and click-through rates), and compliance with GDPR and CAN-SPAM regulations.
-
 ---
 
 ## Features
@@ -23,10 +20,12 @@ The **Mass Email Sender Tool** is a web application for sending personalized ema
 ## Technologies Used
 
 **Frontend**:
+
 - React (with Vite)
 - Auth0 for authentication
 
 **Backend**:
+
 - Node.js
 - Express.js
 - MongoDB (for storing campaigns and recipient data)
@@ -34,6 +33,7 @@ The **Mass Email Sender Tool** is a web application for sending personalized ema
 - Agenda (for scheduling emails)
 
 **Other Tools**:
+
 - Multer (file uploads)
 - CSV Parser (recipient lists)
 - Dotenv (environment variables)
@@ -123,7 +123,7 @@ The frontend application will run on `http://localhost:5173`.
 ## Usage
 
 1. **Log In**: Use the **Login** button to authenticate with Auth0.
-2. **Create Campaign**: 
+2. **Create Campaign**:
    - Upload a CSV file with recipient data.
    - Provide the email subject and content.
    - Schedule the campaign if needed.
@@ -136,14 +136,14 @@ The frontend application will run on `http://localhost:5173`.
 
 ## API Endpoints
 
-| Endpoint                     | Method | Description                                      |
-|------------------------------|--------|--------------------------------------------------|
-| `/send-email`                | POST   | Send or schedule emails.                        |
-| `/tracking-reports`          | GET    | Get tracking reports for campaigns.             |
-| `/campaign-details/:id`      | GET    | Fetch specific campaign details.                |
-| `/track/:id`                 | GET    | Track email opens via tracking pixels.          |
-| `/click/:id`                 | GET    | Track link clicks and redirects.                |
-| `/unsubscribe/:email`        | GET    | Handle unsubscribe requests.                    |
+| Endpoint                | Method | Description                            |
+| ----------------------- | ------ | -------------------------------------- |
+| `/send-email`           | POST   | Send or schedule emails.               |
+| `/tracking-reports`     | GET    | Get tracking reports for campaigns.    |
+| `/campaign-details/:id` | GET    | Fetch specific campaign details.       |
+| `/track/:id`            | GET    | Track email opens via tracking pixels. |
+| `/click/:id`            | GET    | Track link clicks and redirects.       |
+| `/unsubscribe/:email`   | GET    | Handle unsubscribe requests.           |
 
 ---
 
@@ -196,8 +196,8 @@ This project is licensed under the [MIT License](LICENSE).
 
 For questions or feedback:
 
-- **Name**: Your Name  
-- **Email**: codedpool10@gmail.com  
+- **Name**: Your Name
+- **Email**: codedpool10@gmail.com
 - **GitHub**: [codedpool](https://github.com/codedpool)
 
 ---
@@ -205,4 +205,3 @@ For questions or feedback:
 Enjoy using the **Mass Email Sender Tool**! 🚀🦊
 
 ---
-
