@@ -5,6 +5,7 @@ import CampaignForm from "./components/CampaignForm";
 import TrackingReportsTable from "./components/TrackingReportsTable";
 import CampaignDetailsTable from "./components/CampaignDetailsTable";
 import { fetchTrackingReports, fetchCampaignDetails, sendEmail } from "./services/api";
+import { FaSun, FaMoon } from "react-icons/fa";
 
 const App = () => {
   const { user, isAuthenticated, loginWithRedirect, logout } = useAuth0();
@@ -18,6 +19,7 @@ const App = () => {
   const [trackingReports, setTrackingReports] = useState([]);
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [showTrackingReports, setShowTrackingReports] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false); // Dark mode state
 
   // Dynamically set the returnTo URL based on the environment
   const returnToUrl = import.meta.env.VITE_RETURN_TO_URL || window.location.origin;
@@ -100,10 +102,26 @@ const App = () => {
   };
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", width: "100%" }}>
-      {/* Logout Button (Top Right Corner) */}
+    <div style={{ display: "flex", minHeight: "100vh", width: "100%", backgroundColor: isDarkMode ? "#333" : "#f4f4f4" }}>
+      {/* Dark Mode Toggle and Logout Button (Top Right) */}
       {isAuthenticated && (
-        <div style={{ position: "absolute", top: 10, right: 10 }}>
+        <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: "10px" }}>
+          {/* Dark Mode Toggle */}
+          <button
+            onClick={() => setIsDarkMode(!isDarkMode)}
+            style={{
+              padding: "10px",
+              backgroundColor: isDarkMode ? "#555" : "#2196F3",
+              color: "white",
+              border: "none",
+              borderRadius: "5px",
+              cursor: "pointer",
+            }}
+          >
+            {isDarkMode ? <FaSun /> : <FaMoon />}
+          </button>
+
+          {/* Logout Button */}
           <button
             onClick={() => logout({ returnTo: returnToUrl })}
             style={{
@@ -138,12 +156,13 @@ const App = () => {
             onShowTrackingReports={() => setShowTrackingReports(true)}
             trackingReports={trackingReports}
             onCampaignSelect={handleCampaignSelect}
+            isDarkMode={isDarkMode}
           />
           <div style={{ flex: 1, padding: "20px" }}>
             {showTrackingReports ? (
-              <TrackingReportsTable trackingReports={trackingReports} onCampaignSelect={handleCampaignSelect} />
+              <TrackingReportsTable trackingReports={trackingReports} onCampaignSelect={handleCampaignSelect} isDarkMode={isDarkMode} />
             ) : selectedCampaign ? (
-              <CampaignDetailsTable campaign={selectedCampaign} />
+              <CampaignDetailsTable campaign={selectedCampaign} isDarkMode={isDarkMode} />
             ) : (
               <CampaignForm
                 csvFile={csvFile}
@@ -160,6 +179,7 @@ const App = () => {
                 setScheduleDate={setScheduleDate}
                 onSendEmail={handleSendEmail}
                 status={status}
+                isDarkMode={isDarkMode}
               />
             )}
           </div>
@@ -188,13 +208,13 @@ const App = () => {
           >
             {/* Logo */}
             <img
-              src="/collage.png" 
+              src="/collage.png"
               alt="Login"
-              style={{ 
-                width: "100%", // Cover the entire width of the card
-                height: "auto", // Maintain aspect ratio
-                borderRadius: "10px", // Optional: Add rounded corners
-                marginBottom: "20px", // Add spacing below the image
+              style={{
+                width: "100%",
+                height: "auto",
+                borderRadius: "10px",
+                marginBottom: "20px",
               }}
             />
 

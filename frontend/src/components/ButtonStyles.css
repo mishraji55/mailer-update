@@ -18,9 +18,38 @@
 /* Apply the bounce effect on click */
 .bounce-effect:active {
   animation: bounce 0.5s;
+  transform: scale(0.95); /* Slightly shrink the button on click */
 }
 
+/* Hover effect */
 .bounce-effect:hover {
   background-color: #1976d2; /* Darker blue on hover */
   transition: background-color 0.3s ease;
+}
+
+/* Focus state for accessibility */
+.bounce-effect:focus {
+  outline: 2px solid #2196F3;
+  outline-offset: 2px;
+}
+
+/* Disabled state */
+.bounce-effect:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+/* Spinner animation */
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
 }
