@@ -1,11 +1,9 @@
 import React, { useState } from "react";
 import './ButtonStyles.css';
+import { FaBars, FaEnvelope, FaChartLine } from "react-icons/fa";
 
-
-import { FaBars, FaEnvelope, FaChartLine } from "react-icons/fa"; 
-
-const Sidebar = ({ onNewCampaign, onShowTrackingReports, trackingReports, onCampaignSelect }) => {
-  const [isCollapsed, setIsCollapsed] = useState(false); 
+const Sidebar = ({ onNewCampaign, onShowTrackingReports, trackingReports, onCampaignSelect, isDarkMode }) => {
+  const [isCollapsed, setIsCollapsed] = useState(false);
 
   const toggleSidebar = () => {
     setIsCollapsed(!isCollapsed);
@@ -14,14 +12,14 @@ const Sidebar = ({ onNewCampaign, onShowTrackingReports, trackingReports, onCamp
   return (
     <div
       style={{
-        width: isCollapsed ? "60px" : "200px", 
-        backgroundColor: "#f4f4f4",
+        width: isCollapsed ? "60px" : "200px",
+        backgroundColor: isDarkMode ? "#2d2d2d" : "#f4f4f4", // Slightly darker background for sidebar in dark mode
         padding: "20px",
         minHeight: "100vh",
-        transition: "width 0.3s ease", 
+        transition: "width 0.3s ease",
+        borderRight: `1px solid ${isDarkMode ? "#444" : "#ddd"}`, // Smooth modern border
       }}
     >
-      {/* Collapse/Expand Button */}
       <div style={{ textAlign: "center", marginBottom: "20px" }}>
         <button
           onClick={toggleSidebar}
@@ -30,13 +28,13 @@ const Sidebar = ({ onNewCampaign, onShowTrackingReports, trackingReports, onCamp
             border: "none",
             cursor: "pointer",
             fontSize: "20px",
+            color: isDarkMode ? "#fff" : "#333", // Adjust icon color for dark mode
           }}
         >
-          <FaBars /> {/* Icon for the toggle button */}
+          <FaBars />
         </button>
       </div>
 
-      {/* Menu Items */}
       <ul style={{ listStyle: "none", padding: 0 }}>
         <li style={{ marginBottom: "10px" }}>
           <button
@@ -45,19 +43,19 @@ const Sidebar = ({ onNewCampaign, onShowTrackingReports, trackingReports, onCamp
             style={{
               width: "100%",
               padding: "10px",
-              backgroundColor: "#2196F3",
+              backgroundColor: isDarkMode ? "#2196F3" : "#2196F3", // Keep button color consistent
               color: "white",
               border: "none",
               cursor: "pointer",
               borderRadius: "5px",
-              fontSize: isCollapsed ? "20px" : "16px", 
+              fontSize: isCollapsed ? "20px" : "16px",
               fontWeight: "bold",
               display: "flex",
               alignItems: "center",
-              justifyContent: isCollapsed ? "center" : "flex-start", 
+              justifyContent: isCollapsed ? "center" : "flex-start",
             }}
           >
-            {isCollapsed ? <FaEnvelope /> : "New Campaign"} {/* Show icon when collapsed */}
+            {isCollapsed ? <FaEnvelope /> : "New Campaign"}
           </button>
         </li>
         <li style={{ marginBottom: "10px" }}>
@@ -66,27 +64,26 @@ const Sidebar = ({ onNewCampaign, onShowTrackingReports, trackingReports, onCamp
             style={{
               width: "100%",
               padding: "10px",
-              backgroundColor: "#2196F3",
+              backgroundColor: isDarkMode ? "#2196F3" : "#2196F3", // Keep button color consistent
               color: "white",
               border: "none",
               cursor: "pointer",
               borderRadius: "5px",
-              fontSize: isCollapsed ? "20px" : "16px", // Larger icon size when collapsed
+              fontSize: isCollapsed ? "20px" : "16px",
               fontWeight: "bold",
               display: "flex",
               alignItems: "center",
-              justifyContent: isCollapsed ? "center" : "flex-start", // Center icon when collapsed
+              justifyContent: isCollapsed ? "center" : "flex-start",
             }}
           >
-            {isCollapsed ? <FaChartLine /> : "Tracking Reports"} {/* Show icon when collapsed */}
+            {isCollapsed ? <FaChartLine /> : "Tracking Reports"}
           </button>
         </li>
       </ul>
 
-      {/* List of Campaigns */}
-      {!isCollapsed && trackingReports.length > 0 && ( // Only show campaigns when expanded
+      {!isCollapsed && trackingReports.length > 0 && (
         <>
-          <h4>Campaigns</h4>
+          <h4 style={{ color: isDarkMode ? "#fff" : "#333" }}>Campaigns</h4>
           <ul style={{ listStyle: "none", padding: 0 }}>
             {trackingReports.map((report) => (
               <li key={report._id} style={{ marginBottom: "10px" }}>
@@ -95,7 +92,7 @@ const Sidebar = ({ onNewCampaign, onShowTrackingReports, trackingReports, onCamp
                   style={{
                     width: "100%",
                     padding: "10px",
-                    backgroundColor: "#2196F3",
+                    backgroundColor: isDarkMode ? "#2196F3" : "#2196F3", // Keep button color consistent
                     color: "white",
                     border: "none",
                     cursor: "pointer",

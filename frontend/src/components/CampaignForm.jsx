@@ -57,7 +57,7 @@ const CampaignForm = ({
           onChange={(e) => setCsvFile(e.target.files[0])}
           accept=".csv"
           style={{
-            width: "100%",
+            width: "99%",
             padding: "10px",
             borderRadius: "5px",
             border: "1px solid #ddd",
@@ -80,7 +80,7 @@ const CampaignForm = ({
           onChange={(e) => setSubject(e.target.value)}
           placeholder="Enter email subject"
           style={{
-            width: "100%",
+            width: "99%",
             padding: "10px",
             borderRadius: "5px",
             border: "1px solid #ddd",
@@ -102,7 +102,7 @@ const CampaignForm = ({
           placeholder="Enter your email content here"
           rows="5"
           style={{
-            width: "100%",
+            width: "99%",
             padding: "10px",
             borderRadius: "5px",
             border: "1px solid #ddd",
@@ -123,7 +123,7 @@ const CampaignForm = ({
           onChange={(e) => setContentFile(e.target.files[0])}
           accept=".html,.md"
           style={{
-            width: "100%",
+            width: "99%",
             padding: "10px",
             borderRadius: "5px",
             border: "1px solid #ddd",
@@ -159,7 +159,7 @@ const CampaignForm = ({
             value={scheduleDate}
             onChange={(e) => setScheduleDate(e.target.value)}
             style={{
-              width: "100%",
+              width: "99%",
               padding: "10px",
               borderRadius: "5px",
               border: "1px solid #ddd",
@@ -189,7 +189,7 @@ const CampaignForm = ({
         onClick={handleSendEmail}
         className="bounce-effect"
         style={{
-          width: "100%",
+          width: "99%",
           padding: "10px",
           backgroundColor: hasConsent ? "#2196F3" : "#ccc",
           color: "white",

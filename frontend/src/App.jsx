@@ -19,12 +19,10 @@ const App = () => {
   const [trackingReports, setTrackingReports] = useState([]);
   const [selectedCampaign, setSelectedCampaign] = useState(null);
   const [showTrackingReports, setShowTrackingReports] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false); // Dark mode state
+  const [isDarkMode, setIsDarkMode] = useState(false); 
 
-  // Dynamically set the returnTo URL based on the environment
   const returnToUrl = import.meta.env.VITE_RETURN_TO_URL || window.location.origin;
 
-  // Reset all state when the user logs out
   useEffect(() => {
     if (!isAuthenticated) {
       setCsvFile(null);
@@ -40,16 +38,15 @@ const App = () => {
     }
   }, [isAuthenticated]);
 
-  // Fetch tracking reports and campaign details periodically
   useEffect(() => {
     if (isAuthenticated) {
       const fetchData = async () => {
         try {
-          const reports = await fetchTrackingReports(user.sub); // Pass user ID
+          const reports = await fetchTrackingReports(user.sub);
           setTrackingReports(reports);
 
           if (selectedCampaign) {
-            const campaignDetails = await fetchCampaignDetails(selectedCampaign._id, user.sub); // Pass user ID
+            const campaignDetails = await fetchCampaignDetails(selectedCampaign._id, user.sub);
             setSelectedCampaign(campaignDetails);
           }
         } catch (error) {
@@ -57,15 +54,11 @@ const App = () => {
         }
       };
 
-      // Fetch data every 1 second
       const interval = setInterval(fetchData, 1000);
-
-      // Cleanup interval on unmount
       return () => clearInterval(interval);
     }
   }, [isAuthenticated, selectedCampaign, user]);
 
-  // Handle sending emails
   const handleSendEmail = async () => {
     const formData = new FormData();
     formData.append("csvFile", csvFile);
@@ -74,7 +67,7 @@ const App = () => {
     formData.append("subject", subject);
     formData.append("isScheduled", isScheduled);
     if (isScheduled) formData.append("sendAt", scheduleDate);
-    formData.append("userId", user.sub); // Add user ID to the request
+    formData.append("userId", user.sub);
 
     try {
       const result = await sendEmail(formData);
@@ -82,31 +75,28 @@ const App = () => {
       if (result.campaignId) {
         const campaignDetails = await fetchCampaignDetails(result.campaignId, user.sub);
         setSelectedCampaign(campaignDetails);
-        setTrackingReports((prev) => [...prev, campaignDetails]); // Add new campaign to the list
+        setTrackingReports((prev) => [...prev, campaignDetails]);
       }
     } catch (error) {
       setStatus("Error sending email.");
     }
   };
 
-  // Handle campaign selection
   const handleCampaignSelect = async (campaignId) => {
     try {
-      const campaignDetails = await fetchCampaignDetails(campaignId, user.sub); // Pass user ID
+      const campaignDetails = await fetchCampaignDetails(campaignId, user.sub);
       setSelectedCampaign(campaignDetails);
       setShowTrackingReports(false);
     } catch (error) {
       console.error("Error fetching campaign details:", error);
-      setSelectedCampaign(null); // Reset selected campaign if there's an error
+      setSelectedCampaign(null);
     }
   };
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", width: "100%", backgroundColor: isDarkMode ? "#333" : "#f4f4f4" }}>
-      {/* Dark Mode Toggle and Logout Button (Top Right) */}
       {isAuthenticated && (
         <div style={{ position: "absolute", top: 10, right: 10, display: "flex", gap: "10px" }}>
-          {/* Dark Mode Toggle */}
           <button
             onClick={() => setIsDarkMode(!isDarkMode)}
             style={{
@@ -121,7 +111,6 @@ const App = () => {
             {isDarkMode ? <FaSun /> : <FaMoon />}
           </button>
 
-          {/* Logout Button */}
           <button
             onClick={() => logout({ returnTo: returnToUrl })}
             style={{
@@ -138,7 +127,6 @@ const App = () => {
         </div>
       )}
 
-      {/* Main Content */}
       {isAuthenticated ? (
         <>
           <Sidebar
@@ -179,13 +167,12 @@ const App = () => {
                 setScheduleDate={setScheduleDate}
                 onSendEmail={handleSendEmail}
                 status={status}
-                isDarkMode={isDarkMode}
+                isDarkMode={isDarkMode} 
               />
             )}
           </div>
         </>
       ) : (
-        // Centered Login Card
         <div
           style={{
             display: "flex",
@@ -193,45 +180,79 @@ const App = () => {
             alignItems: "center",
             height: "100vh",
             width: "100%",
+            backgroundImage: "url('/background.jpg')",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
           }}
         >
           <div
             style={{
-              backgroundColor: "#fff",
-              borderRadius: "10px",
-              boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
-              padding: "20px",
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              backgroundColor: "rgba(0, 0, 0, 0.5)",
+            }}
+          />
+
+          <div
+            style={{
+              backgroundColor: "rgba(255, 255, 255, 0.1)",
+              backdropFilter: "blur(10px)",
+              borderRadius: "20px",
+              boxShadow: "0 8px 32px rgba(0, 0, 0, 0.2)",
+              padding: "40px",
               textAlign: "center",
               maxWidth: "400px",
               width: "100%",
+              zIndex: 1,
+              border: "1px solid rgba(255, 255, 255, 0.2)",
             }}
           >
-            {/* Logo */}
             <img
               src="/collage.png"
               alt="Login"
               style={{
-                width: "100%",
-                height: "auto",
+                width: "380px",
+                height: "120px",
                 borderRadius: "10px",
-                marginBottom: "20px",
+                marginBottom: "30px",
+                filter: "drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2))",
               }}
             />
 
-            {/* Login Message */}
-            <h2 style={{ marginBottom: "20px", color: "#333" }}>Welcome to the Mass Mail Sender</h2>
+            <h2
+              style={{
+                marginBottom: "30px",
+                color: "#fff",
+                fontSize: "24px",
+                fontWeight: "600",
+                letterSpacing: "0.5px",
+                textShadow: "0 2px 4px rgba(0, 0, 0, 0.2)",
+              }}
+            >
+              Welcome to the Mass Mail Sender
+            </h2>
 
-            {/* Login Button */}
             <button
               onClick={() => loginWithRedirect()}
               style={{
-                padding: "10px 20px",
+                padding: "12px 30px",
                 backgroundColor: "#2196F3",
                 color: "white",
                 border: "none",
-                borderRadius: "5px",
+                borderRadius: "25px",
                 cursor: "pointer",
                 fontSize: "16px",
+                fontWeight: "500",
+                letterSpacing: "0.5px",
+                transition: "background-color 0.3s ease, transform 0.2s ease",
+                boxShadow: "0 4px 12px rgba(33, 150, 243, 0.4)",
+                ":hover": {
+                  backgroundColor: "#1e88e5",
+                  transform: "scale(1.05)",
+                },
               }}
             >
               Login
