@@ -197,7 +197,7 @@ This project is licensed under the [MIT License](LICENSE).
 
 For questions or feedback:
 
-- **Name**: Your Name
+- **Name**: Romanch
 - **Email**: codedpool10@gmail.com
 - **GitHub**: [codedpool](https://github.com/codedpool)
 
